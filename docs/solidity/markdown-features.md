@@ -159,7 +159,7 @@ contract ContractName {}              // 宣告一個合約實體 (contract, Con
 
    - N 必須是 8 的倍數，且落在 8 - 256 區間
 
-   ```ts
+   ```solidity
    int A = -123
    unit B = 123
    int8 c = -6
@@ -171,14 +171,14 @@ contract ContractName {}              // 宣告一個合約實體 (contract, Con
 
 3. address 位址
 
-   ```ts
+   ```solidity
    address X = 0x9A76....                   // 儲存一個以太坊位址，大小為 20 Bytes
    address payable Y = payable(0x9A76....)  // 允許轉錢（以太）到該位址
    ```
 
 4. enum 列舉 (預設值為第一個 Element)
 
-   ```ts
+   ```solidity
    enum Color { Blue, Green}
    Color C = Color.Blue   // 0
    Color D = Color.Green  // 1
