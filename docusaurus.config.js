@@ -1,6 +1,7 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
-
+const math = require("remark-math");
+const katex = require("rehype-katex");
 const lightCodeTheme = require("prism-react-renderer/themes/vsDark");
 const darkCodeTheme = require("prism-react-renderer/themes/vsDark");
 
@@ -38,7 +39,13 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
+          routeBasePath: "docs",
+          path: "docs",
           sidebarPath: require.resolve("./sidebars.js"),
+          lastVersion: "current",
+          onlyIncludeVersions: ["current"],
+          remarkPlugins: [math],
+          rehypePlugins: [katex, { strict: false }],
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           // editUrl:
@@ -55,6 +62,18 @@ const config = {
           customCss: require.resolve("./src/css/custom.css"),
         },
       }),
+    ],
+  ],
+
+  plugins: [
+    [
+      "@docusaurus/plugin-content-docs",
+      {
+        id: "explore",
+        path: "explore",
+        routeBasePath: "explore",
+        sidebarPath: require.resolve("./sidebars.js"),
+      },
     ],
   ],
 
@@ -78,6 +97,12 @@ const config = {
             docId: "intro",
             position: "left",
             label: "Notes",
+          },
+          {
+            to: "/explore/intro", // ./docs-api/Intro.md
+            label: "explore",
+            position: "left",
+            activeBaseRegex: `/explore/`,
           },
           { to: "/blog", label: "Blog", position: "left" },
           {
