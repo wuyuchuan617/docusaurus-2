@@ -7,8 +7,8 @@ const darkCodeTheme = require("prism-react-renderer/themes/vsDark");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "My Site",
-  tagline: "Dinosaurs are cool",
+  title: "Anytype",
+  tagline: "Hi",
   url: "https://your-docusaurus-test-site.com",
   baseUrl: "/",
   onBrokenLinks: "throw",
@@ -22,10 +22,10 @@ const config = {
 
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
-  // to replace "en" with "zh-Hans".
+  // to replace "en" with "zh-Hans".s
   i18n: {
-    defaultLocale: "en",
-    locales: ["en", "zh-Hant"],
+    defaultLocale: "zh-Hant",
+    locales: ["zh-Hant"], //"en",
     localeConfigs: {
       en: {
         htmlLang: "en-GB",
@@ -75,6 +75,15 @@ const config = {
         sidebarPath: require.resolve("./sidebars.js"),
       },
     ],
+    [
+      "@docusaurus/plugin-content-docs",
+      {
+        id: "blockchain",
+        path: "blockchain",
+        routeBasePath: "blockchain",
+        sidebarPath: require.resolve("./sidebars.js"),
+      },
+    ],
   ],
 
   themeConfig:
@@ -92,19 +101,25 @@ const config = {
           src: "img/logo.jpg",
         },
         items: [
+          // {
+          //   type: "doc",
+          //   docId: "intro",
+          //   position: "left",
+          //   label: "Notes",
+          // },
+          // {
+          //   to: "/explore/intro", // ./docs-api/Intro.md
+          //   label: "explore",
+          //   position: "left",
+          //   activeBaseRegex: `/explore/`,
+          // },
           {
-            type: "doc",
-            docId: "intro",
+            to: "/blockchain/category/blockchain-program", // ./docs-api/Intro.md
+            label: "Blockchain",
             position: "left",
-            label: "Notes",
+            activeBaseRegex: `/blockchain/`,
           },
-          {
-            to: "/explore/intro", // ./docs-api/Intro.md
-            label: "explore",
-            position: "left",
-            activeBaseRegex: `/explore/`,
-          },
-          { to: "/blog", label: "Blog", position: "left" },
+          // { to: "/blog", label: "Blog", position: "left" },
           {
             href: "https://github.com/wuyuchuan617",
             label: "GitHub",
@@ -120,21 +135,21 @@ const config = {
         // style: "light",
         links: [
           {
-            title: "Docs",
+            title: "Note",
             items: [
               {
-                label: "Tutorial",
-                to: "/docs/intro",
+                label: "Blockchain",
+                to: "/blockchain/category/blockchain-program",
               },
             ],
           },
           {
             title: "Community",
             items: [
-              {
-                label: "Website",
-                href: "https://spaceyu.com/",
-              },
+              // {
+              //   label: "Website",
+              //   href: "https://spaceyu.com/",
+              // },
               // {
               //   label: "Stack Overflow",
               //   href: "https://stackoverflow.com/questions/tagged/docusaurus",
@@ -148,10 +163,10 @@ const config = {
           {
             title: "More",
             items: [
-              {
-                label: "Blog",
-                to: "/blog",
-              },
+              // {
+              //   label: "Blog",
+              //   to: "/blog",
+              // },
               {
                 label: "GitHub",
                 href: "https://github.com/wuyuchuan617",

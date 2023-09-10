@@ -1,4 +1,4 @@
----
+<!-- ---
 sidebar_position: 4
 tags:
   - 智能合約
@@ -241,4 +241,4 @@ contract ContractName {}              // 宣告一個合約實體 (contract, Con
 
 ### Mapping Types 映射型態
 
-&nbsp;
+&nbsp; -->
