@@ -1,6 +1,6 @@
 ---
 sidebar_position: 4
-sidebar_label: Solidity 基礎 (W2-3)
+sidebar_label: Week 2
 tags:
   - Blockchain
   - Ethereum
@@ -10,6 +10,568 @@ tags:
 
 import Admonition from "@theme/Admonition";
 
-# Week 2-3
+# Week 2
 
-Solidity 基礎
+了解 Ethereum 底層原理、Solidity Type、Defi Product
+
+## Questions
+
+---
+
+#### Homework
+
+1. 何謂 EIP 標準？意義是什麼？EIP 與 ERC 的異同為何？ [Ans 1](#hw1-1) , [Ans 2](#hw1-2)
+2. 請說明目前 Ethereum Gas Fee 如何計算？解決了什麼樣的問題？ [Ans 1](#hw2-1) , [Ans 2](#hw2-2)
+3. 請說明什麼是 MEV？如何影響交易？有哪些例子？[Ans 1](#hw3-1) , [Ans 2](#hw3-2) , [Ans 3](#hw3-3)
+4. 依照影片，使用 Remix 完成 Value Types 與 State variables 範例 [Ans 1](#hw4)
+   - [Link1](https://www.youtube.com/watch?v=8Tj-Th_S7NU) ,
+     [Link2](https://www.youtube.com/watch?v=hl692-xJPUQ)
+5. 部署合約，並透過 Etherscan 進行驗證 (請附上 contract address 與 etherscan 截圖)。
+   同時嘗試發送交易修改 state variable，觀察部署與交易所使用的 Gas fee 為何 [Ans 1](#hw5-1) , [Ans 2](#hw5-2) , [Ans 3](#hw5-3)
+
+#### Class
+
+1. 角色如何跟 protocol/合約互動？要做哪些事情？與中心化版本 (傳統金融機構 or 中心化交易所) 相比，差異是什麼？多了什麼、少了什麼？(ex: 多了哪些「誘因」？多了哪些「平衡機制」？少了什麼「限制」...
+   )
+   - Compound Lender, Borrower, Liquidator
+   - Uniswap Trader, Liquidity Provider
+2. Defi 的風險？
+3. Stablecoin 穩定幣
+4. Metamask, Faucet, Remix, Compile and Deploy Smart Contract
+
+#### Material
+
+1. 了解什麼是 EIP & ERC?
+   [Link](https://ethereum.org/zh-tw/eips/)
+2. 看文章了解 EIP-1559
+   [Link](https://medium.com/taipei-ethereum-meetup/eip1559-in-short-6fdf77ef5f8e)
+3. 看文章了解 Gas 的計算方式
+   [Link](https://ethereum.org/zh-tw/developers/docs/gas/)
+4. 看以下文章 + 影片了解 smart contract
+   [Link1](https://ethereum.org/zh-tw/developers/docs/smart-contracts/) , [Link2](https://www.youtube.com/watch?v=ZE2HxTmxfrI)
+5. 看 Introduction to Remix for beginners 學習使用 Remix
+   [Link](https://www.youtube.com/watch?v=WmeWbo7wzGI)
+
+## Ethereum
+
+---
+
+### EIP / ERC
+
+> #### 何謂 EIP 標準？意義是什麼？ {#hw1-1}
+
+Ethereum Improvement Proposal (EIP / 以太坊改進提案)，是一份文件用來定義以太坊的新功能或新特性、或定義新流程。
+
+社群中的任何人都可以依照 EIP-1 中所定的 Guildline 提出 EIP，EIP-1 定義了一個 EIP 需包含提供功能技術規格、需要改良的理由等。且提案者須負責跟社群進行溝通，並記錄下各種不同的意見與建議。在一個 EIP PR merge 後，就會產生 EIP 的代號，經過 Review, Last Call 等 EIP Process 後，直到 Final 狀態。
+
+![](https://hackmd.io/_uploads/ryfD8yGk6.png)
+
+Source: https://eips.ethereum.org/EIPS/eip-1#eip-types
+
+> #### EIP 與 ERC 的異同為何？ {#hw1-2}
+
+從 EIP-1 中可以看見，EIP 分為三種類別：Standards Track (Core, Networking, Interface, ERC)、Meta、Informational，可以看到 ERC ( Ethereum Request for Comments / 以太坊徵求意見）其實是屬於 Standards Track EIP 下的其中一個類別。
+
+EIP 涵蓋範圍較廣且主要針對改善或是新功能提出的提案，而 ERC 則是針對應用層的標準訂立，像是開發 Token 所需要遵循的規則，常見的 ERC 有：Fungible Token (ERC-20), NFT (ERC-721), GameFi 用的 NFT (ERC-1155), Defi (ERC-4626)。
+
+因此當看見 ERC-20 跟 EIP-20，就可以知道 ERC-20 是制定開發 Fungible Token 的 spec，必須遵循的準則。而 EIP-20 則是針對 ERP-20 提出改善提案。當 EIP-20 被正式接受後，就會納入 ERC-20 中。
+
+Source:
+
+- https://ethereum.org/zh-tw/eips/
+- https://cypherpunks-core.github.io/ethereumbook_zh/18.html
+- https://ithelp.ithome.com.tw/m/articles/10299250
+- https://eips.ethereum.org/
+- https://itechnote.co/eip-erc/
+
+### Gas
+
+在說明 gas fee 如何計算之前，會先說明 EIP-1559 的內容，因為 EIP-1559 對於 gas fee 的計算方式有所改變。
+
+> #### 為什麼需要 EIP-1559？
+
+1. Gas price 因為大家都想優先將自己的交易被打包，因此不斷提升 gas fee，造成 gas price 難以預測對一般用戶容易多付 gas fee，甚至造成 gars price war，手續費進到礦工口袋，在利益分配上不是最佳的。
+2. 礦工利用自己有權利決定交易的打包順序，在交易中獲取而外利益（MEV）或是將自己的交易 gas fee 調低。
+
+> #### 什麼是 EIP-1559？EIP-1559 帶來什麼變化？
+
+2021/8/4 倫敦升級其中最重要的 EIP-1559，EIP-1559 想要解決的問題是區塊鏈資源的尖離峰調度。gas fee 依照網絡使用量來進行調整，而且時按一定比例去調整不會讓 gas fee 一下暴增。
+
+Source:
+
+- https://www.youtube.com/watch?v=4SVImpmfM1A
+- https://medium.com/taipei-ethereum-meetup/eip1559-in-short-6fdf77ef5f8e
+
+> #### Gas 與 Gas Fee 差異
+
+假設發出一筆交易，這個發出交易的動作需要的這個發出交易的動作需要的 Gas 數量是不變的，會消耗 21,000 個 gas。變化的是每個 Gas 的的單價，就是 Gas Fee。就像開車到某處，所需的耗油量是一樣的，但可能會因為汽油價格不一樣，而相同距離的汽油成本有所不同。
+
+每個 OPCODE(每個操作需要的計算量或儲存空間) 運行所消耗的 gas 表。最常見的：
+
+| OPCODE            | Gas            |
+| ----------------- | -------------- |
+| ETH 轉帳          | 21,000 gas     |
+| OpenSea 交易      | 約 70,000 gas  |
+| Uniswap Swap 交易 | 約 200,000 gas |
+
+- https://ethereum.org/en/developers/docs/evm/opcodes/
+- https://github.com/crytic/evm-opcodes
+
+> #### 查看目前 Gas 價格
+
+- [Etherscan Ethereum Gas Tracker](https://etherscan.io/gastracker)
+- [Blocknative Gas Fee Estimator](https://chrome.google.com/webstore/detail/blocknative-gas-fee-estim/ablbagjepecncofimgjmdpnhnfjiecfm/related)
+
+> #### 請說明目前 Ethereum Gas Fee 如何計算？ {#hw2-1}
+
+```
+Gas Fee = Gas Limit/Used * (Base Fee + Priority Fee)
+```
+
+1. **Base Fee**: 是協議中定義最低需要支付的費用用來驗證交易正確性
+2. **Priority Fee**: 則是給 Validator 的小費
+3. **maxFeePerGas**: 是這這筆訂單 sender 原意支付最大的 gas fee，maxFeePerGas 大於 base fee + priority fee，沒用到的 gas 則回退還給 sender。maxFeePerGas 小於 base fee + priority 需要排隊等到基礎費用下降才能成交。
+4. **maxPriorityFeePerGas**: 是這這筆訂單 sender 原意支付最大的 Priority fee
+
+無論交易成功或失敗，驗證者都花費運算資源，因此必須支付 Gas Fee。Gas Fee 必須用 ETH 支付，以 qwei 單位表示（1 ETH = 0.000000001 ETH or 10-9 ETH）。
+
+假設 A 轉 1 ETH 給 B，A 帳戶會被扣 1 ETH + 0.000252 ETH gas fee (21,000 (10 + 2) = 252,000 gwei) = 1.000252 ETH
+B 會收到 1 ETH，Validator 會收到 0.000042 ETH，而 base fee 的 0.00021 ETH is burned（銷毀）。
+
+![](https://hackmd.io/_uploads/BJ7mm0fJa.png)
+
+> #### 為什麼 Base Fee 要銷毀？
+
+在 EIP-1559 中，Base Fee 是被 Burned，意思是它被從流通供應中永久移除，而不是支付給礦工。因為如果基礎手續費不被銷毀，而是支付給礦工，那麼礦工可能會有激勵來操縱手續費，這會破壞價格的預測性。
+
+> #### Base Fee 如何計算？
+
+利用 Block Gas Limit (Block Size) 每個 Block 有 target size 為 1500 萬 gas， 最多只能是兩倍 target size 3000 萬 gas。Block 越大，就需要越大的算力。如果這個區塊超過 targer size，就會提高下一個區塊的 base fee，如果 Gas Used 是 100% 最多增加 12.5%，如果 block size 小於 taregt size，則會降低下個區塊 base fee。
+
+> #### Gas Fee 解決了什麼樣的問題？ {#hw2-2}
+
+1. 可預測性: 在 EIP-1559 之前，用戶很難預測交易需要多少手續費才能被成功執行。這個提案引入了基礎手續費（Base Fee），使得用戶能更容易預測交易成本。
+2. 根據網路使用量來調整 gas fee，避免出現暴增的 gas fee。
+
+> #### Layer 2 是什麼？
+
+Source:
+
+- https://ethereum.org/zh-tw/developers/docs/gas/ (Gas)
+- https://ethereum.org/zh-tw/developers/docs/blocks/ （Block Size)
+- https://www.youtube.com/watch?v=MGemhK9t44Q&t=443s (EIP-1559)
+- https://www.youtube.com/watch?v=eMX85xai2-U
+- https://www.youtube.com/watch?v=E932myMejGY
+
+### MEV
+
+> #### 請說明什麼是 MEV？ {#hw3-1}
+
+MEV 在 POW 中是指 Miner Extractable Value 代表礦工可提取價值。因為礦工在生產區塊時能夠重新排序、包括或排除交易，且可藉由這些決定產出額外的利潤。 在 POS 中則是指 Maximal Extractable Value，因為在 POS 當中是由 Validator 創建區塊，但概念是一樣的 Validator 有權利包括或排除交易、決定交易順序並從中獲得利潤。在去中心化的世界中，因為交易是由交易的時間順序或是有一人決定的，因此 MEV 是去中心化本來就會出現的現象。
+
+雖然 MEV 可能造成一般用戶需要用更多的成本來做交易，但其實也會為網絡帶來一些好處，像是 Searcher （搜索者，專門搜尋有 ＭＥＶ 套利機會的機器人）透過獲得獎勵或套利，能夠穩定不同 DEX 的價格，穩定借貸的運行等等。大部分的 MEV 還是來自 DEX Arbitrage，其次 Liquidation 清算。
+
+![](https://hackmd.io/_uploads/SkWUrlGyT.png)
+
+Source: https://explore.flashbots.net/
+
+> #### MEV 如何影響交易？ {#hw3-2}
+
+1. **Front Running**: 看到獲利的交易，在用戶前面插入一筆一樣的交易，利用提高 gas fee 的方式取代先前的交易
+2. **Back Running**: 看到一筆交易造成大幅度的影響時時，嘗試套利、清算或交易，以穩定市場。
+3. **Sandwich Attach**: 在交易前插入買單，在交易後插入賣單，交易前的買單可以以較低價購買並會影響 Token 價格往上升，在交易後再將它賣出，賺取價差利潤。
+
+> #### MEV 有哪些例子？ {#hw3-3}
+
+1. **DEX Arbitrage 套利**: 假設一個 Token 在兩個 DEX 有差異，可以從較低價格的 DEX 購賣並賣出到較高價個的 DEX，因為區塊鏈中交易的原子性（Atomic Transaction，一筆交易可以包含多個 swap/hop），因此這樣的套利方式風險是較低的。
+
+2. **Liquidation 清算**: 為抵押不足的借款人，進行部分債務的清算，使抵押比例達到清算標準之上，清算者可以獲取 liquidation fee 賺取 MEV。
+
+3. **Sandwich trading**: 在交易前插入買單，在交易後插入賣單，交易前的買單可以以較低價購買並會影響 Token 價格往上升，在交易後再將它賣出，賺取價差利潤。三明治交易因為不是在同一筆交易中完成（非原子交易），因此存在較高的風險。
+
+4. **NFT MEV**: 假設有一個大家正在搶的 NFT，Validator 可以將自己的交易優先於其他人的交易已成功購買某個 NFT，或是可以在 NFT 定價錯誤時，在低價大量購買這些 NFT。
+
+Source:
+
+- https://ethereum.org/zh-tw/developers/docs/mev/
+- https://www.youtube.com/watch?v=Z_charqdlJk
+- https://github.com/biquanlibai/blockchain-course
+- https://medium.com/@twedusuck
+
+### Smart Contract
+
+> #### 部署合約，並透過 Etherscan 進行驗證 (請附上 contract address 與 etherscan 截圖)。 {#hw5-1}
+
+- **contract address**: `0x19C9097bc9b8fA71517eCC12C57ff7B1dBf95921`
+- **etherscan 截圖**:
+
+部署花費 (Base Fee 1.49649921 + Priority Fee 2.5) \* Gas Used 125701 = 502,363.947 Gwei = 0.00050235 ETH
+
+<img
+  src="https://hackmd.io/_uploads/rkGY4wmkp.png"
+  alt=""
+  style={{ width: "45%" }}
+/>
+
+retrieve function 最初回傳 0
+
+![](https://hackmd.io/_uploads/BJu5hUm1T.png)
+
+> #### 同時嘗試發送交易修改 state variable {#hw5-2}
+
+透過 store function 將 26 透過參數 num 設定到 state variable number 中
+
+![](https://hackmd.io/_uploads/SJEnhUXka.png)
+
+交易 Pending
+
+![](https://hackmd.io/_uploads/H1lkaI7yp.png)
+
+交易 Success
+
+![](https://hackmd.io/_uploads/HJweTUQka.png)
+
+交易花費 (Base Fee 1.359965968 + Priority Fee 1.5) \* Gas Used 43724 = 125,049.152 Gwei = 0.000125049 ETH
+
+<img
+  src="https://hackmd.io/_uploads/HkWj4PQ16.png"
+  alt=""
+  style={{ width: "45%" }}
+/>
+
+再次 retrieve function 最初回傳剛剛設定的 26
+
+![](https://hackmd.io/_uploads/B1pdmPmyT.png)
+
+> #### 觀察部署與交易所使用的 Gas fee 為何 {#hw5-3}
+
+- **Address**: `0x5EA0aF2a7089C67F00525F4B5Ab61aa8D4634745`
+
+最上面的交易為使用 Remix 發送 store function 將 26 存入合約內的交易，
+第二筆的交易為使用 Etherscan 發送 store function 將 26 存入合約內的交易，
+第三筆則是部署這個合約的交易。
+
+![](https://hackmd.io/_uploads/ByklqPmyp.png)
+
+> #### 什麼是 Multisig (multiple-signature) contracts？
+
+Multisig（Multiple Signature）合約是一種需要多個簽名才能執行某些操作的智能合約。假設你有一個 3-of-5 Multisig 合約，意思是有 5 個共簽者，並且需要至少 3 個不同的簽名才能執行合約中定義的特定操作。
+
+> #### 什麼是 ABI？
+
+Source:
+
+- https://ethereum.org/zh-tw/developers/docs/smart-contracts/
+- https://www.youtube.com/watch?v=ZE2HxTmxfrI
+- [OpenZeppelin](https://www.openzeppelin.com/contracts)
+
+## Solidity
+
+---
+
+- Solidity 是靜態型態 (Statically typed language)，所有所有變數都需要宣告型態 ，在編譯的時後就會做檢查。
+- 每個型態都有預設值，不存在 undefined, null
+- 型態主要分為三種：數值型態（Value Type）、參考型態（Reference Type）、映射型態（Mapping Type）
+
+- EVM 中，一個 slot 是以 32 bytes 為單位。uint256 : 32 bytes = 256 bits
+  bool : 1 bytes = 8 bits。address : 20 bytes = 160 bits。string : EVM 使用 UTF-8 編碼，每個字符占用 1 byte，所以在使用 string 盡量控制字串長度。
+
+```solidity
+// SPDX-License-Identifier: GPL-3.0   // 宣告版權
+
+pragma solidity >=0.8.2 <0.9.0;       // 指定編譯器版本，開關編譯器使用
+
+contract ContractName {}              // 宣告一個合約實體
+```
+
+> #### Develop Tools
+
+#### Remix
+
+Source:
+
+- https://www.youtube.com/watch?v=WmeWbo7wzGI
+
+#### Faucet
+
+- https://sepoliafaucet.com/ 要註冊 Alchemy 帳號，0.5 ETH/day
+- https://sepolia-faucet.pk910.de/ 神秘的 mining 小程式，網頁開著可以累積 ETH
+
+#### Harthat
+
+#### Foundry
+
+#### Truffle
+
+### Value Types
+
+#### Boolean
+
+- 預設值為 false
+
+#### Integer: int, unit, intN, unitN
+
+- 預設值為 0
+- int: 有號整數（Signed Integer）
+- uint: 無號整數（Unsigned Integer）
+- N 指整數空間大小，N 必須為 8 的倍數，且落在 [8, 256]
+
+```solidity
+int A = -123
+unit B = 123
+int8 c = -6             // -2**7 to 2**7-1 節省空間
+unit256 D = 123456789   // 0 to 2**256 -1
+
+int = int256    // -2**255 to 2**255-1
+unit = unit256  // 0 to 2**256 -1
+
+type(X).min
+type(X).max
+```
+
+#### Address
+
+- 預設值是 0x0000000000000000000000000000000000000000，也就是全為零的 20 字節（160 位）地址。這個地址通常被稱為「零地址」（Zero Address）。
+- 儲存一個以太坊地址大小為 20 bytes = 160 bits
+- `payable` 修飾字代表，允許轉錢到這個以太坊地址，如果沒有加上 `payable` 是沒辦法轉錢到這個地址的。
+
+```solidity
+address X = 0x9A76....                   // 儲存一個以太坊位址，大小為 20 Bytes
+address payable Y = payable(0x9A76....)  // 允許轉錢（以太）到該位址
+```
+
+#### enum
+
+- 預設值是第一個元素
+
+```solidity
+enum Color { Blue, Green }
+Color C = Color.Blue   // 0
+Color C                // Color.Blue 0
+Color D = Color.Green  // 1
+```
+
+### Reference Types
+
+> #### State variables {#hw4}
+
+1. local: exisit in function, 執行結束後會消失
+2. state: store on blockchain
+3. global variable: 
+
+```solidity
+contract StateVariables{
+  uint public myUint = 123; // state variable
+
+  function foo() external {
+    uint notStatevariable =456;  // local variable
+  }
+}
+```
+
+> #### Data Location 資料存放的位置:
+
+1. **儲存空間（storage）**: 儲存在合約的儲存空間，存放狀態 (state) 的地方，合約被銷毀才會消失，會寫到所有節點上，大量地存取 storage 時，燃料費會超貴，全域變數放在 storage (where the lifetime is limited to the lifetime of a contract)
+2. **記憶體（memory）**: 執行結束就會消失 (whose lifetime is limited to an external function call)
+3. **呼叫資料（calldata）**: 唯獨（read-only）的特殊資料區，用來儲存函式的參數。
+
+> #### 不同資料位置的移動
+
+- storage 移動到 memory or calldata 必然複製一份，就是需要成本
+- memeory or calldata 移動到 storage 必然複製一份，就是需要成本
+- memory 移動到 memory 只是複製 reference，因此修改一個會改到另一個
+- storage 移動到 local storage （專門指到 storage 空間的參考）也只會建立參考
+
+```solidity
+contract Contract{
+    // storage
+    uint[] x;
+
+    function f(uint[] memory memoryArray) public {
+        x = memoryArray;       // memory to storage, COPY 成本高
+        uint[] storage y = x;  // local storage, assign a pointer, x 參考位置給 y
+        g(x);                  // 傳遞 x 參考位置, COPY 成本低
+        h(x);                  // storage to memeory, COPY 成本高
+    }
+
+    function g(uint[] storage) internal pure {}
+    function h(uint[] memory) public pure {}
+}
+```
+
+#### string
+
+- 需要指定存放位置 memory 或 storage
+- 無法直接修改字串內容
+- 無法取得特定字串位置 S[0]
+- 比較時需要用 hash() 來比較
+- 串接字串則有 string.concat(s2, s2)
+- 長度要先轉換成 bytes 才能取得 bytes(str).length
+- 如果是 UTF-8 的話長度為 bytes 長度，而不是字串長度。
+
+```solidity
+string memory Name = 'hi'
+
+keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2))
+```
+
+#### array
+
+- `Type[Length] memeory|storage Varname`
+- 長度可透過 Varname.length
+
+```solidity
+int[32] X; // 宣告一個長度 32 的 int array, X.length 回傳 32
+
+int[] Y;   // 動態長度陣列
+Y.push(x)  // 如果 Y 是動態長度陣列，x 被加入 Y 的尾端
+Y.pop()    // 如果 Y 是動態長度陣列，則將最尾端元素丟棄
+```
+
+#### structs
+
+```solidity
+struct S{
+  int I;
+  address A;
+}
+```
+
+### Mapping Types
+
+### Function
+
+```solidity
+function FnName [V] [SM] [returns(types...)]{}
+
+function FnName public view [returns(int, string memory)]{}
+```
+
+- `V` 是 Visibility 可見性
+  - `public` : 任何合約或帳戶都可以呼叫
+  - `private` : 只有目前合約可以呼叫
+  - `external` : 目前合約、其繼承合約不能呼叫，其他都可以呼叫
+  - `internal` : 只有目前合約、其繼承合約可以呼叫
+- `SM` 是 State Mutability 狀態可變性
+  - `pure` : 這個 function 不會讀取或寫入任何狀態
+  - `view` : 這個 function 只讀取狀態
+    - 讀取 storage 變數
+    - 讀取合約餘額
+    - 讀取全域變數 block, tx, msg (除 msg.sig, msg.data 外)
+    - 呼叫任何不被標示為 pure function
+    - 直接使用特定的組合語言
+  - 不寫代表寫入狀態
+    - 寫入資料到 storage
+    - 發出事件 (emit log)
+    - 建立其他合約
+    - 呼叫特殊指令 selfdestruct
+    - 通過 call 來發送 ETH
+    - 呼叫任何不被標記為 pure or view function
+    - 使用 low-level calls
+    - 使用特定的組合語言
+- `returns(types...)` 回傳值，可回傳一個或多個回傳值，如果沒有回傳值可省略
+
+#### Receive Ether Function
+
+- 一個合約
+
+```solidity
+receive() external payable{}
+```
+
+#### Send Ether Function
+
+### Contructor
+
+- optional
+- 無回傳值，可傳入參數
+- 只會在合約部署的那一刻被呼叫，用來改變變數的預設值，所有的 storage 變數在呼叫 constructor 之前已經被初始化
+- 不會放到最終程式碼、放到區塊鏈上
+
+```solidity
+constructor(int string){}
+
+Contract A {
+  int public I = 1234;
+  uint public U;
+  string public S = "Hello"
+}
+
+Contract B {
+  int public I
+  uint public U;
+  string public S;
+  constructor(int _I, uint _U, string memory _S){
+    I = _I;
+    U = _U;
+    S = _S;
+  }
+}
+```
+
+Deploy 時候會出現，要填數值
+
+![](https://hackmd.io/_uploads/HyYHX8Q1a.png)
+
+### Event
+
+### Operator
+
+## Defi Product
+
+---
+
+### Uniswap
+
+![](https://hackmd.io/_uploads/rJk_hqGk6.png)
+
+#### Trader
+
+#### Liquidity Provider
+
+### Compound
+
+#### Lender
+
+#### Borrower
+
+#### Liquidator
+
+## Resources
+
+---
+
+- https://solidity.tw/
+- https://www.youtube.com/playlist?list=PLHmOMPRfmOxQYDnXAc1hKY6ra4WDU8ZlM
+
+## E-Portfolio
+
+---
+
+|       | Hours | 紀錄                                                     |
+| :---: | :---: | -------------------------------------------------------- |
+|  Mon  |   2   | 看 EIP, ERC 部分、Uniswap、Compound                      |
+|  Tue  |   2   | 看 Gas 計算部分                                          |
+|  Wed  |   2   | 看 Smart Contract 部分、做週四簡報                       |
+|  Thu  |   1   | 看 MEV 部分                                              |
+|  Fri  |   2   | 寫 EIP, ERC, Gas, MEV 作業回答                           |
+|  Sat  |   8   | 看 Solidity 文件、教學影片、練習實作、訂正上週作業       |
+|  Sun  |   8   | 完成 Eportfolio、學習 Solidity、練習實作、複習下週一考試 |
+| Total |  25   |                                                          |
+
+#### 本週學習總結
+
+有了上週的一些基礎，在看這週以太坊相關的概念的作業有比較快一些。在課堂中認識了 Uniswap 和 Compound 的運作方式覺得很酷！
+課堂上第一次 Deploy 合約（雖然只是 Temlpate），也是第一次用 Metamask 轉測試用的 SepoliaETH 給同學。
+
+#### 下週學習目標
+
+看 Solitidy 文件、練習實作、多認識一些 Defi 項目跟運作方式。
+
+## Questions
+
+---
+
+## Feedback
+
+---
