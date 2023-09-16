@@ -1,6 +1,6 @@
 ---
 sidebar_position: 4
-sidebar_label: 區塊鏈基礎原理 (W1)
+sidebar_label: Week 1
 tags:
   - Blockchain
   - Ethereum
@@ -106,7 +106,10 @@ PoW 所解的問題是一個 Hash 問題，交易內容與這個 Nonce 隨意數
    - 使用 Hash 函數（例如，SHA-256 於比特幣中）對組合後的數據進行哈希運算。
    - 檢檢查計算出的哈希值是否滿足某個特定條件。如果哈希值滿足條件，則找到了合適的 Nonce，並將其與區塊數據一起廣播到網絡，該區塊會被其他節點驗證並添加到區塊鏈上。如果哈希值不滿足條件，則需要改變 Nonce（通常是增加 1 或使用其他方式進行變更）並重複步驟。
 
-Source : [Anders Brownworth Blockchain 101 影片](https://www.youtube.com/watch?v=_160oMzblY8)
+Source :
+
+- [Anders Brownworth Blockchain 101 影片](https://www.youtube.com/watch?v=_160oMzblY8)
+- [影片中的網站](https://andersbrownworth.com/blockchain/block)
 
 6. 區塊的廣播和最終確認
 
@@ -449,3 +452,22 @@ Source: https://ethereum.org/zh-tw/developers/docs/gas/#how-are-gas-fees-calcula
 ## Questions
 
 ## Feedback
+
+> #### 如果是不同鏈，也 nonce 一樣，這樣會不會有 replay attack 呢，如果會該如何避免？
+
+即使 nonce 和其他所有交易參數都一樣，不同的 Chain ID 會產生不同的簽名。EIP-155 引入了使用 Chain ID 的機制。即使你在不同的以太坊鏈（比如主網和某個測試網）有相同的帳戶和相同的 nonce，由於 Chain ID 不同，這兩個交易會有不同的簽名。因此，一個在某個鏈上有效的交易不會被重播（replay）到另一個鏈上。
+
+> #### EIP-155
+
+- EIP-155 之前：(nonce, gasprice, startgas, to, value, data) 進行 RLP 編碼，v 是 27 或 28
+- EIP-155 之後： (nonce, gasprice, startgas, to, value, data, chainid, 0, 0) 進行 RLP 編碼，v = chain*id * 2 + 35 或 v = chain*id * 2
+
+在 EIP-155 實施後，Chain ID 也成為了簽名過程的一部分。因此即使兩個鏈在其他方面完全相同，只要它們有不同的 Chain ID，用一個鏈上的簽名在另一個鏈上就不會有效。
+
+Source:
+
+- https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
+- https://ethereum.stackexchange.com/questions/69008/eip155-how-chainid-works
+- https://chainid.network/
+- https://www.cnblogs.com/wanghui-garcia/p/9648147.html
+- https://foresightnews.pro/article/detail/38118
