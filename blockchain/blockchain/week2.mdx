@@ -340,6 +340,18 @@ address X = 0x9A76....                   // 儲存一個以太坊位址，大小
 address payable Y = payable(0x9A76....)  // 允許轉錢（以太）到該位址
 ```
 
+#### Members of Addresses
+
+```solidity
+address.balance (uint256)      // 回傳該地址餘額，單位 wei
+address.code (bytes memory)    // 回傳該地址的程式碼，可能為空
+address.codehash (bytes32)     // 回傳該地址的程式碼的雜湊值
+
+// transfer, send 都是轉 wei 到當前帳戶，只允許使用 2300 gas
+<address payable>.transfer(uint256 amount)             // 失敗會觸發 revert
+<address payable>.send(uint256 amount) returns (bool)  // 失敗會回傳 false，方便失敗處理
+```
+
 #### enum
 
 - 預設值是第一個元素
@@ -357,7 +369,7 @@ Color D = Color.Green  // 1
 
 1. local: exisit in function, 執行結束後會消失
 2. state: store on blockchain
-3. global variable: 
+3. global variable: msg.sender 回傳 address，取得當前 call 的發送者
 
 ```solidity
 contract StateVariables{
@@ -439,6 +451,32 @@ struct S{
 
 ### Mapping Types
 
+- `mapping(KeyType => ValueType) Variablename`
+- KeyType : 只能使用 integer, bytes, string, contract, enum，不支援 mapping, structs, array
+- ValueType : 可以是任何型態
+- keccak256(key) -> value
+- ERC token: address -> balance
+
+```solidity
+contract Class {
+  mapping(uint => uint) Students;
+
+  function update(uint id, uint scrore) public {
+    Students[id] = score;
+  }
+
+  function get(uint id) public view returns (uint) {
+    return Students[id];
+  }
+}
+```
+
+<img
+  src="https://hackmd.io/_uploads/rkUePd41a.png"
+  alt=""
+  style={{ width: "45%" }}
+/>
+
 ### Function
 
 ```solidity
@@ -473,13 +511,93 @@ function FnName public view [returns(int, string memory)]{}
 
 #### Receive Ether Function
 
-- 一個合約
+- 一個合約只能有一個 receive function
+- 不需要 `function` 關鍵字
+- 不允許任何參數、無法回傳任何回傳值
+- 必須有 `external`、`payable`
+- receive 什麼時候會被觸發？ 在發送一個沒有任何 calldata 的交易到這個合約的時候
+- receive function 只允許使用 2300 gas 因此如果在 receive Function 中多了以下行為將可能消耗更多的 gas 導致交易失敗。
+  - 寫入 storage
+  - 建立新合約
+  - 呼叫一個會消耗大量燃料的 external function
+  - 發送 ETH (至少消耗 2300 gas)
+
+value 填要送出的 ETH 數量，發送一個沒有任何 calldata 的交易就會觸發 receive function
+
+<img
+  src="https://hackmd.io/_uploads/HkbOnUV16.png"
+  alt=""
+  style={{ width: "45%" }}
+/>
 
 ```solidity
 receive() external payable{}
+
+contract PiggyBack{
+  contructor() payable {}
+  receive() payable external {}
+}
 ```
 
 #### Send Ether Function
+
+> #### 如何限制誰可以提領
+
+- constructor 設定和設定合約擁有者
+- require 檢查領錢的發送者是否為合約擁有者
+- modifier 套用在 withdraw function
+- 任何人都可以存錢但只有部署者可以提領
+
+```solidity
+contract PiggyBack{
+  address public owner;   // 設定合約擁有者，在部署的時候透過 contructor 設定擁有者
+
+  modifier onlyOwner(){
+    require(owner == msg.sender, "Only owner can call this function");
+    _;
+  }
+
+  contructor() payable {
+    owner = msg.sender;   // owner 設定為呼叫 constructor 的人就是部署者
+  }
+
+  receive() payable external {}
+
+  function withdraw() onlyOwner external {           // 加上 modifier
+    address payable Receiver = payable(msg.sender);  // 把這個 address 變成 payable 才能收錢
+    Receiver.send(address(this).balance);            // 把合約的餘額都送到這個 address
+  }
+}
+```
+
+### this
+
+- this 代表當前合約
+
+```solidity
+address(this)          // 可建立一個 address 指向當前的合約
+address(this).balance  // 取得目前合約餘額
+```
+
+### modifier
+
+- `_;` ：呼叫原本 function 本體
+
+```solidity
+modifier M (){
+  // do something
+  _; // 呼叫原本 function 本體
+  // do something
+}
+
+function F() public M {}
+```
+
+### Error handing
+
+```solidity
+require(條件, "錯誤處理")
+```
 
 ### Contructor
 
@@ -513,7 +631,71 @@ Deploy 時候會出現，要填數值
 
 ![](https://hackmd.io/_uploads/HyYHX8Q1a.png)
 
+### Control Structure
+
+- `if(){} else if(){} else{}`
+
+```solidity
+uint Score;
+
+if(Score > 90){
+  return "A";
+} else if(Score > 80){
+  return "B";
+} else if(Score > 70){
+  return "C";
+}else{
+  return "D";
+}
+```
+
+- `for(宣告; 條件; 事後修改的事){}`
+
+```solidity
+// 沒寫條件會變無窮迴圈
+
+contract A {
+  uint[] Scores = [90, 91, 92, 93, 94];
+
+  function X() public view returns (uint){
+    uint Sum = 0;
+
+    for(uint index = 0; index < Scores.length; index++){
+      Sum = Sum + Scores[index];
+    }
+
+    return Sum;
+  }
+}
+```
+
+- `while (條件){}`
+
+```solidity
+contract A {
+  uint[] Scores = [90, 91, 92, 93, 94];
+
+  function X() public view returns (uint){
+    uint Sum = 0;
+    uint index = 0;
+
+    while (index < 5){
+      Sum = Sum + Scores[index];
+      index++;
+    }
+
+    return Sum;
+  }
+}
+```
+
+- `break` : 跳脫當前迴圈，巢狀 break 只會跳回上一層迴圈
+
+- `continue` : 跳過本次迴圈
+
 ### Event
+
+- Log，由觸發事件所產生的 log，會被寫在執行交易的區塊裡 (合約本身無法查詢)，永久儲存
 
 ### Operator
 
@@ -523,11 +705,19 @@ Deploy 時候會出現，要填數值
 
 ### Uniswap
 
-![](https://hackmd.io/_uploads/rJk_hqGk6.png)
+#### Liquidity Pool
+
+#### Automated market making
 
 #### Trader
 
+![](https://hackmd.io/_uploads/rJk_hqGk6.png)
+
 #### Liquidity Provider
+
+Source:
+
+- https://www.youtube.com/watch?v=DLu35sIqVTM
 
 ### Compound
 

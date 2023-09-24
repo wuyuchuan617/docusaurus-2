@@ -8,7 +8,262 @@ tags:
   - Smart Contract
 ---
 
+import Gist from "react-gist";
 import Admonition from "@theme/Admonition";
 
 # Week 3
 
+Solidity、ERC-20
+
+## Questions
+
+---
+
+#### Homework
+
+1. 完成 Bank contract [Ans](#hw1)
+
+   - 主要存入 ETH，而非 ERC20 token
+   - 最少完成這三個方法：Deposit , Withdraw , Check Balance
+
+2. 說明什麼是 ERC20? 並嘗試完成、發行自己的代幣，並驗證合約 [Ans 1](#hw2-1) , [Ans 2](#hw2-2)
+
+3. 說明以下三個的差別：call, static-call, delegatecall [Ans](#hw3)
+
+4. 領 Sepolia 測試幣 : https://sepoliafaucet.com/
+
+#### Test
+
+1. 當以太坊針對一筆交易 (Transaction)簽章時，該筆交易內容基本會含有哪些資訊 ? 8
+
+2. ERC 是什麼？跟 EIP 的差別在哪裡？
+
+3. 什麼是 Gas , GasLimit & Gas Price？EIP1559 調整了 gas 的什麼部分？
+
+4. 請問 MEV 是什麼？他如何影響使用者的交易行為？
+
+#### Class
+
+1. Transaction
+
+   - 如何發送交易
+   - 發送一筆 Transaction 需要包含哪些欄位，並詳細說明每個欄位的用途
+   - 部署合約時 Transaction 欄位與一般時 Transaction 有什麼差別
+   - 與合約互動時 Transaction 欄位與一般時 Transaction 有什麼差別
+   - 詳細說明 TX Hash 是如何產生的
+
+2. 帳戶/地址的概念
+
+   - 什麼是以太坊中的帳戶/地址，有包含哪兩種類型
+   - 這兩類型的帳戶/地址在以太坊一定包含哪些欄位
+   - 兩者類型的最大差異為何，如何判斷這個帳戶/地址是什麼
+   - 如何透過鏈上與鏈下的方式得知是否為 EOA or Contract
+
+3. msg.sender vs tx.origin
+
+   - 什麼是 msg.sender
+   - 什麼是 tx.origin
+   - 為什麼會需要兩個，兩者的差異為何
+
+4. Remix 撰寫合約練習
+
+   - 題目：設置一個計數器，點選一次就會加一，並可以看到目前計數器的數字
+
+5. Deploy
+
+   - Solidity 中的 Constructor 是做什麼用的
+   - 什麼是 creation code 與 runtime code
+   - 合約是如何部署到以太坊(會將程式碼轉成什麼，然後後續的動作是如何在以太坊虛擬機上執行)
+
+6. Solidity Data Type
+
+   - Solidity 有哪些型別，根據這些型別調用方式，可以分成哪兩種大類
+   - Solidity 型別預設值各是什麼，試著在 remix 上測試
+   - Solidity 與其他語言的型別差異
+
+7. Solidity Visibility
+
+   - State Variable Visibility 有哪些，各代表什麼意思，以及預設值為何
+   - Function Visibility 有哪些，各代表什麼意思
+   - State Variable Visibility 與 Function Visibility 易混淆的地方
+
+8. Solidity State Mutability，Solidity View & Pure 差異
+
+9. Payable 是做什麼用的
+
+10. 試著透過 remix 撰寫看看
+
+    - 題目：設置一個計數器，點選一次就會加一，但每次執行會需要消耗 0.001ETH，並且可以領取出這份合約內的所有 ETH
+
+11. State Variable
+
+    - Constant vs Immutable 差別
+    - 試著透過 remix 撰寫合約分別建立 Constant & Immutable
+
+12. Require, Revert, Assert 三個的差別與使用時機
+
+## ERC-20
+
+> #### 說明什麼是 ERC20? {#hw2-1}
+
+ERC-20 是針對 Fungible Token 所制定的統一標準的 Interface，在 ERC-20 中定義了 6 個 required 方法(transfer, transferFrom, approve, allowance, balanceOf, totalSupply)、3 個 optional 的方法 (name, symbol, decimal)、2 個 Event (Transfer, Approval)。
+
+** Optional Methods:**
+
+- name: 返回 token name
+- symbol: 返回 token symbol
+- decimals: 返回 token decimals
+
+** Required Methods:**
+
+- totalSupply()：返回代幣的總供應量。
+- balanceOf(address account)：返回指定地址的代幣餘額。
+- transfer(address recipient, uint256 amount)：將一定數量的代幣從 msg.sender 轉移到 recipient address。
+- allowance(address owner, address spender)：返回 owner 允許 spender 轉出的代幣數量。
+- approve(address spender, uint256 amount)：允許 spender 從 msg.sender 轉移一定數量的代幣。
+- transferFrom(address owner, address recipient, uint256 amount)：允許 spender 從 sender 轉移一定數量的代幣到 recipient address，前提是 spender 已獲得 owner 的授權。
+
+**Event:**
+
+- Transfer(address indexed from, address indexed to, uint256 value)：當使用 transfer, transferFrom 時觸發。
+- Approval(address indexed owner, address indexed spender, uint256 value)：當使用 approve 時觸發。
+
+```solidity
+interface IERC20 {
+  function name() public view returns (string)
+  function symbol() public view returns (string)
+  function decimals() public view returns (uint8)
+
+  function totalSupply() public view returns (uint256)
+  function balanceOf(address _owner) public view returns (uint256 balance)
+  function transfer(address _to, uint256 _value) public returns (bool success)
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success)
+  function approve(address _spender, uint256 _value) public returns (bool success)
+  function allowance(address _owner, address _spender) public view returns (uint256 remaining)
+
+  event Transfer(
+    address indexed from,
+    address indexed to,
+    uint256 value
+  );
+
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
+```
+
+![](https://hackmd.io/_uploads/H1-iASay6.png)
+
+Source:
+
+- [bitpanda What is the ERC20 token standard?](https://www.bitpanda.com/academy/en/lessons/what-is-the-erc20-token-standard/)
+- [eip-20.md](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md)
+
+> #### 為什麼需要 ERC20?
+
+![](https://hackmd.io/_uploads/S1kyG86Ja.png)
+Source: [D'cent Academy what is ERC-20?](https://academy.dcentwallet.com/terminology/what-is-erc-20)
+
+> #### ERC20 Token on Uniswap, Etherscan
+
+![](https://hackmd.io/_uploads/ByVrQLpy6.png)
+
+
+
+## Solidity
+
+### CALL, STATICCALL, DELEGATECALL
+
+> #### 說明以下三個的差別：call, static-call, delegatecall {#hw3}
+
+三個方法都是用調用其他合約的方法。
+
+#### CALL
+
+當合約 A call 合約 B，無法修改呼叫合約（合約A）的 state variables，因為 execution context 是在 Contract B 中。
+
+![](https://hackmd.io/_uploads/SJWZtKakp.png)
+
+#### STATICCALL
+
+當合約 A call 合約 B，只能調用被呼叫合約（合約B）的 pure or view function。
+![](https://hackmd.io/_uploads/Hyx8hda1T.png)
+
+#### DELEGATECALL
+
+被呼叫合約（合約B）可以修改呼叫合約（合約A）的 state variables，因為 execution context 是在 Contract A 中。
+
+![](https://hackmd.io/_uploads/HJMfYYaka.png)
+
+> #### 什麼是 execution context?
+
+#### 使用情境
+
+- 代理合約（Proxy Contract）
+  將智能合約的存儲合約和邏輯合約分開：代理合約（Proxy Contract）存儲所有相關的變量，並且保存邏輯合約的地址；所有函數存在邏輯合約（Logic Contract）裡，通過delegatecall執行。當升級時，只需要將代理合約指向新的邏輯合約即可。
+
+- EIP-2535 Diamonds（鑽石）
+  鑽石是一個支持構建可在生產中擴展的模塊化智能合約系統的標準。鑽石是具有多個實施合同的代理合同。
+
+Source:
+
+- https://mirror.xyz/0x06364bD10F128eA6b7b8459A084dde6794E44c1a/-9VOJ2tw6RGi3VHSqWWb7WsjHpb3Zxpoj8_sR_M8Iv8
+- https://www.twblogs.net/a/5beb13ae2b717720b51ecbcc
+- https://medium.com/0xmantle/solidity-series-part-3-call-vs-delegatecall-8113b3c76855
+
+
+### Bank Practice
+
+> #### 完成 Bank contract (主要存入 ETH，而非 ERC20 token)，完成這三個方法：Deposit , Withdraw , Check Balance {#hw1}
+
+<Gist id="9e624926f4a37b8a4385943527e5e90a" />
+
+Source:
+
+- https://www.youtube.com/watch?v=DKFVnGcMTD0
+
+### ERC20 Token Practice
+> #### 嘗試完成、發行自己的代幣，並驗證合約 {#hw2-2}
+
+<Gist id="42862c48afd6e3df272a2f602ff25d9e" />
+
+## Resources
+
+---
+
+- https://solidity.tw/
+- https://www.youtube.com/playlist?list=PLHmOMPRfmOxQYDnXAc1hKY6ra4WDU8ZlM
+
+## E-Portfolio
+
+---
+
+|       | Hours | 紀錄                               |
+| :---: | :---: | ---------------------------------- |
+|  Mon  |   2   | 看 ERC-20                          |
+|  Tue  |   2   | 準備週四報告                       |
+|  Wed  |   2   | 寫 call, static-call, delegatecall |
+|  Thu  |   1   | 訂正作業                           |
+|  Fri  |   1   | 看 Bank contract                   |
+|  Sat  |   2   | 完成 Bank contract                 |
+|  Sun  |   8   | 發行自己的代幣，並驗證合約         |
+| Total |  18   |                                    |
+
+#### 本週學習總結
+
+1. 這週學習 Solidity type, mutability, visibility 需要多加練習熟悉這些，和在實作過程中發生的錯誤原因。
+2. 交朋友建立錢包、領取測試幣。
+3. 搜尋文章看到這個平台感覺滿酷的 https://mirror.xyz/
+
+#### 下週學習目標
+
+看 [這個 YT 清單影片](https://www.youtube.com/playlist?list=PLO5VPQH6OWdVQwpQfw9rZ67O6Pjfo6q-p) 熟悉 solidity
+
+---
+
+## Feedback
+
+---
