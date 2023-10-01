@@ -8,6 +8,207 @@ tags:
   - Smart Contract
 ---
 
+import Gist from "react-gist";
 import Admonition from "@theme/Admonition";
 
 # Week 4
+
+## Homework
+
+### 1. Wrapped Ether
+
+> #### Wrapped Ether 是什麼？
+
+Wrapped Ether（WETH）是以太坊上的一種 ERC-20 Token，它是 ETH 的包裝版本。這種包裝形式使得以太幣可以在以太坊智能合約中進行交易，這是因為智能合約通常只能處理 ERC-20 Token，而不能直接處理以太幣。WETH 就可以在以太坊的智能合約中自由流通，同時也可以在去中心化交易所（DEX）等平台進行交易，並參與各種智能合約和交易活動。
+
+- 將 ETH 轉換為 WETH：使用者可以通過將一定數量的 ETH 存入 WETH 合約中，1:1 掛鉤來獲得相應數量的 WETH。
+- 將 WETH 轉換回 ETH：持有 WETH 的使用者可以隨時將其轉換回等值的 ETH。
+
+> #### 為什麼需要 Wrapped token？
+
+可以讓非依照 ERC20 所發行的 token，例如原生幣 ETH 或是其他鏈的的幣如 BTC，透過合約打包以 1:1 掛鉤兌換相等的 wrapped toke，方便這些 token 能夠與以太坊上的智能合約互動。
+
+> #### 還有哪些其他的 Wrapped token？
+
+在 Uniswap 上搜尋 wrapped，可以看到 Wrapped token。
+
+- Wrapped ETH (WETH)
+- Wrapped BTC (WBTC)
+- Coinbase Wrapped Staked (cbETH)
+- Wrapped Amleforth (WAMPL)
+- Wrapped Centrifuge (WCFG)
+- Wrapped Terra Classic (LUNC)
+- Wrapped USTC (USTC)
+- Wrapped Flow (WFLOW)
+
+> #### 透過Remix實作一個 Wrapped ether，部署到Sepolia上，並驗證合約
+
+1. Wrapped ETH Contract
+
+   - 需要一個 deposit function: 接收 ETH 後，增加 totalSupply、增加 sender 的 balance
+   - 需要一個 withdraw function: 減少 totalSupply、減少 sender 的 balance 後 send ETH 給 sender
+   - [WETH Contract link](https://sepolia.etherscan.io/address/0x9c97c84a0371e17cd80216e0d3f638dad1101195#code)
+     <Gist id="a05c97add7a60a1a8d209dee8201c457" />
+
+Source:
+
+- [Yputube - WETH | Solidity 0.8
+  ](https://www.youtube.com/watch?v=UqKQ1bTatUs)
+
+### 2. Receive & Fallback
+
+> #### 什麼是 Receive function、Fallback function，兩者比較差異
+
+Solidity 支援兩種特殊的函數，分別是 Fallback 以及 Receive，一個是處理合約中不存在的功能時進行的回退機制，而另一個Receive則是負責收款後的動作，但兩者稱為特殊函數的原因主要是跟我們一般函數不同的地方於它們是屬於匿名的函數，也就是不用給定Function名稱。
+
+**fallback()**
+當呼叫合約但是該合約下卻沒有任何吻合 function 且 msg.data 有值就會呼叫 fallback()。
+
+**receive()**
+在 msg.data empty 且 receive() 存在時才會執行 receive()。如果 receive() 不存在則執行 fallback()
+
+> #### 實作一個一份有Receive & Fallback function的合約，傳入ether，看是否能收到
+
+1. **ReceiveFallback Contract**
+
+   <Gist id="56724aa14eb304a6c4eda2aa6e78035b" />
+
+2. **測試結果**
+
+   - calldata 有值，value 1 ETH 送出交易，會執行 fallback 觸發 fallback log
+   - calldata 空值，value 1 ETH 送出交易，會執行 receive 觸發 receive log
+   - 把 receive() 註解掉重新部署，calldata 空值，value 1 ETH 送出交易，會執行 fallback 觸發 fallback log
+
+Source:
+
+- [Youtube - Fallback | Solidity 0.8](https://www.youtube.com/watch?v=CMVC6Tp9gq4)
+- [Solidity Docs](https://docs.soliditylang.org/en/latest/contracts.html#special-functions)
+
+### 3. Pokemon
+
+製作一款寶可夢遊戲
+
+- 一個寶可夢需要有名稱，攻擊與防禦這三種屬性
+- 根據地址，可以查詢到該玩家所擁有的寶可夢
+- 一個玩家可以有多個寶可夢
+- 需要有一個 create 的方法來創造出寶可夢
+- 可付費 0.1 ETH 來增加該玩家所擁有的特定寶可夢的攻擊或是防(自行選擇是否完成)
+
+1. **Requirements**
+
+   - PokemonGame 需要 Pokemon, Player struct
+   - 需要一個 view function 透過 address 查詢該 address 所有 Pokemons
+   - 需要一個 function create Pokemon struct
+   - 需要一個 function enhance 該玩家的某個 pokemon 的 attack, defence
+
+2. **create function**
+
+   - `player.pokemonCount` 初始值為 0 因此先透過 `player.pokemonCount++` 讓第一個 pokemon 從 1 開始
+   - `Pokemon(name, attack, defense)` 可建立一個 pokemon
+   - 把新建立的 pokemon 放到 `player.pokemons[player.pokemonCount]`
+
+3. **enhance function**
+
+   - 需要檢查 `msg.value` 是否為 0.1 ether
+   - 需要檢查玩家要 enhance 的 pokemonId 是否存在，因為 pokemons 是從 1 開始遞增，因此透過 pokemonId 是否大於 `player.pokemonCount` 來判斷 pokemonId 是否存在
+   - 如果 pokemonId 則把傳入的參數更新到該 pokemon 的 attack, defence
+
+4. **view function**
+
+   - 查詢該玩家的某個 pokemon，如果 pokemonId 存在則回傳 `playerInfo.pokemons[pokemonId]`
+   - 查詢該玩家的全部 pokemon，先建立一個 result，透過迴圈將 mapping 放入 result 並回傳 result
+
+5. **Full PokemonGame Contract**
+
+   - [PokemonGame Contract Link](ddd)
+
+   <Gist id="d3bdb7b1b7b0a8df78d2c0f600295d82" />
+
+6. **測試結果**
+
+   - 執行 `createPokemon` 再執行 `getPlayerPokemonByPokemonId`, `getPlayerPokemons` 確認是否出現剛剛 create 的 pokemon
+   - 執行 `getPlayerPokemonByPokemonId` 並給大於擁有數量的數字，應該要回傳 `Invalid Pokemon ID`
+   - 執行 `enhancePokemon` 再執行 `getPlayerPokemonByPokemonId`, `getPlayerPokemons` 確認是否出現剛剛更新的 attack, defence
+   - 執行 `getPlayerPokemonByPokemonId` 並給大於擁有數量的數字，應該要回傳 `Invalid Pokemon ID`
+   - 執行 `getPlayerPokemonByPokemonId` 並給 value 非 0.1 ether，應該要回傳 `Need 0.1 ETH`
+
+   - 執行 `createPokemon` 再執行 `getPlayerPokemonByPokemonId`, `getPlayerPokemons` 確認是否出現兩個 pokemon
+   - 換一個帳號執行 `getPlayerPokemonByPokemonId`, `getPlayerPokemons` 確認是否都是 0
+
+## Class
+
+### 1. Hackme (approve, transferFrom)
+
+撰寫一份Bank合約，執行 deposit()，就會將BC token存入
+到此合約執行freeMint取得BC token (5 min)
+實作一份Bank合約，包含deposit() function (20 min)
+預期結果：當執行 deposit 後，你所有的BC token都會被轉到Bank合約中
+
+1. **取得 BC Token**
+
+   - 到 [BC Token Contract](https://sepolia.etherscan.io/address/0xFB76C72C0B19b07739A52355B8500374514a17C5#writeContract) 執行 freeMint 先取得 1BC
+   - 可以透過 metamask import 可看到目前 BC Token 數量
+
+2. **HackMe Contract**
+
+   - 如何使用其他合約的 function : `IERC20(BCContractAddress).balanceOf(msg.sender)` 透過 interface 包地址方式就可以使用
+   - `address(this)` 可取得目前合約地址
+   - 需要用到 `transferFrom` msg.sender to HackMeContract address
+   - transferFrom 數量要是 msg.sender 的全部，因此需要用到 balanceOf(msg.sender)
+   - [HackMe Contract Link](https://sepolia.etherscan.io/address/0xdb13be5c72fc5ce180581ceb72a9b48876cbbc83#writeContract)
+
+   <Gist id="b472df0c40059d54689c446bb446bc6b" />
+
+3. **BC Token Contract approve HackMe Contract**
+
+   - Deploy Hackme Contract 取得地址
+   - 到 Etherscan BC Token Contract 執行 approve，sender 填 HackMe address，amount 填 1000000000000000000(18個0)
+
+4. **測試結果**
+   - 執行 Hackme Contract deposit()
+   - Check BC Token balance on Metamask，應該要是 0 BC
+
+### 2. Data storage (storage & memory & calldata)
+
+1. Storage : 有寫入到區塊鏈，是存放在鏈上的。
+2. Memory ：只存在funciton的調用期間，執行完成後即消失
+3. Calldata ：類似於memory，但是memory在當另一個函式調用時，他會copy該memory的參數，才傳遞進函式使用，因此會多消耗gas，如果採用calldata則不會copy。
+
+以上三個消耗的 gas 排序: storage > memory > calldata
+
+<Gist id="9e91bf9d096d4b06f1f99589ec961cae" />
+
+### 3. Storage slot
+
+Source:
+
+- [Youtube - Solidity Storage: What You Need To Know](https://www.youtube.com/watch?v=i_LwhlFNSkI)
+
+## E-Portfolio
+
+---
+
+|       | Hours | 紀錄                     |
+| :---: | :---: | ------------------------ |
+|  Mon  |   0   |                          |
+|  Tue  |   2   | 複習週一上課內容         |
+|  Wed  |   2   | 寫 receive(), fallback() |
+|  Thu  |   0   |                          |
+|  Fri  |   4   | 寫 pokemon               |
+|  Sat  |   2   | 看 wrapped token         |
+|  Sun  |   8   | 寫 wrapped token         |
+| Total |  18   |                          |
+
+#### 本週學習總結
+
+在課堂的實作題在課堂上大約完成一半，希望可以再多熟悉，能夠在課堂上完成。
+
+#### 下週學習目標
+
+多練習上課或作業題目，透過題目更加熟悉。
+
+---
+
+## Feedback
+
+---
