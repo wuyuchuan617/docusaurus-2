@@ -1,0 +1,599 @@
+---
+sidebar_position: 8
+sidebar_label: Week 5
+tags:
+  - Blockchain
+  - Ethereum
+  - Solidity
+  - Smart Contract
+---
+
+import Gist from "react-gist";
+import Admonition from "@theme/Admonition";
+
+# Week 5
+
+## Homework
+
+### TradingCenter
+
+在remix中實作 Trading Center，部署至 Sepolia 並驗證(Optional)
+
+- TradingCenter 合約
+  - 此份合約只能夠交換BC token(ERC20)
+  - 你可提供BC token進合約，也能夠用自行部署的ERC20 token交換合約內擁有的BC token
+  - 自行部署的ERC20與BC token間的匯率固定永遠 1:1
+- Trading Center會想要怎麼實作架構
+  - 前置作業
+  - Interface設計，參考此份 [gist](https://gist.github.com/d49976110/ea6645a8977e4d25eda7474446296df1)
+
+**BC Token Contract**
+
+- [BC Token Contract](https://sepolia.etherscan.io/token/0xFB76C72C0B19b07739A52355B8500374514a17C5)
+
+**MyToken Contract**
+
+- [之前作業發行的 ERC20 token](https://sepolia.etherscan.io/token/0x1754100b3702699930431c7d2c52756349b08e2f)
+
+**TradingCenter Contract**
+
+<Gist id="03c8718533056b94d862decbfffe8181" />
+
+**拿 BC token**
+
+- user 到 BC token contract freeMint
+- user 到 BC token contract check balanceOf
+- user 到 BC token contract approve trading center(spender)
+- BC token contract check allowance
+
+**存 BC token 到 trading center**
+
+- 到 trading center deposit
+- deposit 如超出 allowance 則返回錯誤
+- deposit 如超出 balance 則返回錯誤
+- 到 trading center getDepositAmount check contract's BC token blanace
+- 到 trading center \_tokenBalance 也可以查詢 BC token blanace
+
+**拿 MyToken 到 trading center 1:1 兌換 BC token**
+
+- 檢查是否為 ERC20 token
+- user 到 MyToken contract approve trading center 為 spender
+- user 到 MyTokenn contract check balanceOf
+- user 到 MyToken contract transferFrom MyToken contract to user
+- MyToken contract check allowance
+- trading center contract exchange
+
+**預期結果**
+
+- user 的 mytoken balanceOf 應該減少交換數量
+- user 的 bctoken 應該增加交換數量
+- trading center mytoken 應該增加交換數量 bc token 應該減少交換數量
+
+### Function encode
+
+嘗試將以下的function encode，並取得相對應的calldata
+
+Calldata的ABI編碼基本規則是：`4 bytes + 32 bytes x n`
+
+1. **透過 AppWorks function 傳入 parameters**
+
+   ```solidity
+   // Type: uint256[] Type: address
+   AppWorks(true, [9,18], 0x2Ff1F4e5D08a822743ec6b342c521A0a421456cb, "Brian")
+
+   function AppWorks(bool flag, uint256[] calldata number, address addr, string calldata name) public pure returns(bytes memory){
+       return abi.encode(flag, number, addr, name);
+   }
+   ```
+
+2. **Function Selector**
+
+`AppWorks(bool,uint256[],address,string)` 取做 keccak256 得到
+`ae53a4a5de847a787e5d8f3ccaae29d926f717cac558aea0b8ba6a0fcba69dbf`
+開前四個 byte (8 digits) 為 `ae53a4a5`
+
+3. **Remix 上可以複製 Calldata 為**
+
+   - 第一個參數為 boolean 占一個 byte，傳入 true 則為 1
+   - 第二個參數為 uint256[] 會先存 array 儲存位置在第 128byte 地方
+   - 第三個參數為 address 占 20bytes(從有邊數過來占40個位置)
+   - 第四個參數為 string 會先存 string 儲存位置在第 224bytes 地方
+   - 128bytes : 存 uint256[] 長度為 2
+   - 160bytes : 存 [9,18] index0 為 9
+   - 192bytes : 存 [9,18] index1 為 18 轉為 16進位為 12
+   - 224bytes : 存 string 長度為 5
+   - 256bytes : 存 Brian 用 ASCII 把 Brian 轉為 16進位
+
+   ```solidity
+   // 0x
+   // ae53a4a5
+   // 0000000000000000000000000000000000000000000000000000000000000001  boolean true
+   // 0000000000000000000000000000000000000000000000000000000000000080  80=128(8*16+0) uint256[] 儲存位置在第 4 個 32bytes (128/32)
+   // 0000000000000000000000002ff1f4e5d08a822743ec6b342c521a0a421456cb  address
+   // 00000000000000000000000000000000000000000000000000000000000000e0  e0=224(14*16+0) string 儲存位置在第 7 個 32bytes (224/32)
+   // 0000000000000000000000000000000000000000000000000000000000000002  uint256[] length=2
+   // 0000000000000000000000000000000000000000000000000000000000000009  uint256[] index0 9
+   // 0000000000000000000000000000000000000000000000000000000000000012  uint256[] index1 18(1*16+2)
+   // 0000000000000000000000000000000000000000000000000000000000000005  string length=5
+   // 427269616e000000000000000000000000000000000000000000000000000000  Brian
+   ```
+
+### Storage slot
+
+這份 [合約](https://gist.github.com/d49976110/7d43f0a1c489403815207fdf1863ec05) 中的每個參數會在哪個Slot中(number1~case3)
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.18;
+
+contract StorageSlot{
+    enum Case1 { ONE, TWO, THREE }
+    enum Case2 { ONE, TWO, THREE, FOUR }
+    enum Case3 { ONE, TWO, THREE, FOUR, onw, two, three,four }
+
+
+    uint256 public number1;
+    uint128 public number2;
+    uint256 constant public number3 = 1000;
+    address public owner;
+    uint8   public number4;
+    bytes8  public b8 = bytes8("0x08");
+    address public sender;
+    bytes12 public b12 = bytes12("0x12");
+    bytes32 public b32 = bytes32("0x32");
+    Case1   public case1;
+    Case2   public case2;
+    Case3   public case3;
+
+    constructor(uint256 _number1 , uint128 _number2, uint8 _number4){
+        number1 = _number1;
+        number2 = _number2;
+        owner = msg.sender;
+        number4 = _number4;
+        sender = msg.sender;
+    }
+
+}
+```
+
+> #### 為什麼 constant 沒有存在 slot 中？
+
+constant 在 complile 時候直接 hard-coded in bytecode 中，不會存在 contract storage 中。bytecode 在 number3 會直接認為是 1000
+
+> #### 為什麼 enum 沒有存在 slot？
+
+在 complie 過程中 enum 就會被轉換為值在 bytecode 中。
+
+1. **slot**
+
+一個 slot 儲存空間為 32 bytes，超過就會望下個 slot 擺放。
+
+- 第 0 個 slot: 存 uint256 public number1; (32bytes)
+- 第 1 個 slot: 存 uint128 public number2; (16bytes)
+- 第 2 個 slot: 存 address public owner; (20bytes) & uint8 public number4; (1byte) & bytes8 public b8 = bytes8("0x08"); (8bytes)
+- 第 3 個 slot: 存 address public sender; (20bytes) & bytes12 public b12 = bytes12("0x12"); (12bytes)
+- 第 4 個 slot: 存 bytes32 public b32 = bytes32("0x32"); (32bytes)
+- 第 5 個 slot: 存 Case1 public case1; (1byte) & Case2 public case2; (1byte) & Case3 public case3; (1byte)
+
+2. **驗證檢查**
+
+點擊 complie tab > Complilation Details > Dialog 中看 Storage layout
+
+```json
+{
+  "storage": [
+    {
+      "astId": 21,
+      "contract": "contracts/StorageSlot.sol:StorageSlot",
+      "label": "number1",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_uint256"
+    },
+    {
+      "astId": 23,
+      "contract": "contracts/StorageSlot.sol:StorageSlot",
+      "label": "number2",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_uint128"
+    },
+    {
+      "astId": 28,
+      "contract": "contracts/StorageSlot.sol:StorageSlot",
+      "label": "owner",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_address"
+    },
+    {
+      "astId": 30,
+      "contract": "contracts/StorageSlot.sol:StorageSlot",
+      "label": "number4",
+      "offset": 20,
+      "slot": "2",
+      "type": "t_uint8"
+    },
+    {
+      "astId": 36,
+      "contract": "contracts/StorageSlot.sol:StorageSlot",
+      "label": "b8",
+      "offset": 21,
+      "slot": "2",
+      "type": "t_bytes8"
+    },
+    {
+      "astId": 38,
+      "contract": "contracts/StorageSlot.sol:StorageSlot",
+      "label": "sender",
+      "offset": 0,
+      "slot": "3",
+      "type": "t_address"
+    },
+    {
+      "astId": 44,
+      "contract": "contracts/StorageSlot.sol:StorageSlot",
+      "label": "b12",
+      "offset": 20,
+      "slot": "3",
+      "type": "t_bytes12"
+    },
+    {
+      "astId": 50,
+      "contract": "contracts/StorageSlot.sol:StorageSlot",
+      "label": "b32",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_bytes32"
+    },
+    {
+      "astId": 53,
+      "contract": "contracts/StorageSlot.sol:StorageSlot",
+      "label": "case1",
+      "offset": 0,
+      "slot": "5",
+      "type": "t_enum(Case1)5"
+    },
+    {
+      "astId": 56,
+      "contract": "contracts/StorageSlot.sol:StorageSlot",
+      "label": "case2",
+      "offset": 1,
+      "slot": "5",
+      "type": "t_enum(Case2)10"
+    },
+    {
+      "astId": 59,
+      "contract": "contracts/StorageSlot.sol:StorageSlot",
+      "label": "case3",
+      "offset": 2,
+      "slot": "5",
+      "type": "t_enum(Case3)19"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "encoding": "inplace",
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_bytes12": {
+      "encoding": "inplace",
+      "label": "bytes12",
+      "numberOfBytes": "12"
+    },
+    "t_bytes32": {
+      "encoding": "inplace",
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_bytes8": {
+      "encoding": "inplace",
+      "label": "bytes8",
+      "numberOfBytes": "8"
+    },
+    "t_enum(Case1)5": {
+      "encoding": "inplace",
+      "label": "enum StorageSlot.Case1",
+      "numberOfBytes": "1"
+    },
+    "t_enum(Case2)10": {
+      "encoding": "inplace",
+      "label": "enum StorageSlot.Case2",
+      "numberOfBytes": "1"
+    },
+    "t_enum(Case3)19": {
+      "encoding": "inplace",
+      "label": "enum StorageSlot.Case3",
+      "numberOfBytes": "1"
+    },
+    "t_uint128": {
+      "encoding": "inplace",
+      "label": "uint128",
+      "numberOfBytes": "16"
+    },
+    "t_uint256": {
+      "encoding": "inplace",
+      "label": "uint256",
+      "numberOfBytes": "32"
+    },
+    "t_uint8": {
+      "encoding": "inplace",
+      "label": "uint8",
+      "numberOfBytes": "1"
+    }
+  }
+}
+```
+
+### foundry
+
+> #### foundry 是做什麼的？
+
+官網： https://book.getfoundry.sh/
+
+Foundry is a smart contract development toolchain.
+Foundry manages your dependencies, compiles your project, runs tests, deploys, and lets you interact with the chain from the command-line and via Solidity scripts.
+
+過往進行 Testing 的時候是使用 Hardhat, Truffle, DappTools 等撰寫 Javascript/ Typescript 語法的測試，而 foundry 則可以使用 solidity 撰寫 unit test。
+
+> #### 什麼是 Unit test，以及為何需要?
+
+Unit test 是以程式碼的最小單位進行測試，因為合約部署上鏈就無法被修改，因此經過測試可以減少錯誤發生。
+
+> #### 什麼是 Fuzzing 測試？
+
+> #### Foundry vs Hardhat
+
+> #### 安裝 foundry，確認可以使用 forge、cast 和 anvil
+
+1. Install foundryup `curl -L https://foundry.paradigm.xyz | bash`
+
+   - https://getfoundry.sh/
+   - https://book.getfoundry.sh/getting-started/installation
+
+   ![](https://hackmd.io/_uploads/Hkl7bITga.png)
+
+2. Install or update Foundry `foundryup`
+
+   ![](https://hackmd.io/_uploads/rJIB-8plT.png)
+
+3. 安裝完成後執行以下指令檢查
+
+- `forge  --version`
+- `cast  --version`
+- `anvil  --version`
+
+  ![](https://hackmd.io/_uploads/HyHtbU6xT.png)
+
+> #### 這三個指令是做什麼用的？
+
+- forge : run build or test
+
+  https://book.getfoundry.sh/reference/forge/
+
+  ![](https://hackmd.io/_uploads/HkALV8pl6.png)
+
+- anvil : 跑起一個節點。可以是全新的一個本地節點，也可以是背後連上 Forked State（例如 Forked Mainnet、Forked Goerli）的節點。
+  https://book.getfoundry.sh/reference/anvil/
+  ![](https://hackmd.io/_uploads/SyViBUpgp.png)
+
+- cast : 用來取鏈上資料的工具
+
+  https://book.getfoundry.sh/reference/cast/
+
+  ![](https://hackmd.io/_uploads/SyDPHUTxp.png)
+
+Source:
+
+- [合約開發框架 Foundry 介紹及使用心得](https://medium.com/imtoken/foundry-introduction-and-our-experience-sharing-d9d82bf012ae)
+- [Solidity 及 EVM 開發工具介紹](https://medium.com/taipei-ethereum-meetup/tools-for-debugging-solidity-and-evm-interaction-285f2bfb9c17)
+- [How To Test The Smart Contract Of iParking NFT With Foundry](https://ithelp.ithome.com.tw/articles/10284458?sc=rss.iron)
+- [Youtube - Foundry](https://www.youtube.com/playlist?list=PLO5VPQH6OWdUrKEWPF07CSuVm3T99DQki)
+
+### Etherscan API key
+
+Apply Etherscan API key `B1I6MXTY7HXG5W3YZ52ZB4K9JN8AEMPFBT`
+
+![](https://hackmd.io/_uploads/By2NgUTgp.png)
+
+## Class
+
+### Keccak256
+
+> #### 什麼是Keccak256
+
+Keccak256 是一個 one way hash function (不可被 decoded)，可以將任意字串或數字轉換成長度固定 32bytes data type （64 characters 16進制的數）的 hash，輸入的大小寫有區別（Hello World 和 hello world 會產生不同的 hash）
+
+> #### 在合約中Keccak256需要傳入什麼型別
+
+在合約中使用 Keccak256 必須先將傳入的 data 透過 `abi.encode()` 或 `abi.encodePacked()` 將 data 轉為 bytes 格式
+
+> #### 為什麼需要先 encode
+
+讓 EVM 讀懂
+
+> #### 透過Keccak256得到的結果是什麼型別
+
+得到長度固定 32bytes data type （64 digits 的 16進制的數，Each byte requires 2 digits）的 hash。
+
+### Encryption vs Hash
+
+> #### 什麼是雜湊
+
+明文丟進一串公式後變成秘文，無法「逆向解出明文」，因此安全性相較於加密更高，也是跟加密最大的區別。如 Kecck256。
+
+> #### 什麼是加密
+
+將明文資訊改變為難以讀取的密文，可透過「解密」還原出內容，加密跟解密都必須要透過金鑰（key）才能進行。如 ECDSA。
+
+> #### 兩者差別
+
+加密可以透過解密逆向推導出原文，但雜湊無法逆向回推
+
+![](https://hackmd.io/_uploads/By3VHttgp.png)
+![](https://hackmd.io/_uploads/ByQ5SFYep.png)
+
+source: https://www.okta.com/identity-101/hashing-vs-encryption/
+
+### abi
+
+> #### 什麼是 Function Selector (Function Signature)
+
+```solidity
+pragma solidity ^0.8.7;
+contract Abi {
+   uint256 public value;
+   function setValue(uint256 _value) public {
+      value = _value;
+   }
+}
+```
+
+假設送出 `setValue(7)` 會是送出 `0x552410770000000000000000000000000000000000000000000000000000000000000007` 為EVM 能夠讀懂的 16 進位格式。Remix input 也可以看到這串。
+
+![](https://hackmd.io/_uploads/rJqt6OKep.png)
+
+functionName(parameters types) 去做 Keccack256。例如: `setValue(uint256)` Keccack256 後為 `5524107728b6898cfcb4f9c8c4692293f130d6580f855e9f0718b1fa98cbecbd` ，取前四個 bytes (8 digits) `55241077` 作為 Function signature。
+
+```solidity
+0x        // hex
+55241077  // function signature
+0000000000000000000000000000000000000000000000000000000000000007  // uint256 7 parameter
+```
+
+可以用這個 [Keccack256 online tool](https://emn178.github.io/online-tools/keccak_256.html) 做 Keccack256
+
+![](https://hackmd.io/_uploads/SkqntvFl6.png)
+
+可以用這個 [Ethereum Signature Database](https://www.4byte.directory/) 搜尋目前有的 Function signature 可以得到 `setValue(uint256)`
+
+![](https://hackmd.io/_uploads/BJPYFPFep.png)
+
+> #### Function selector collision
+
+Function selector為什麼會有衝突
+利用以下 2 個資源，找兩個相同 selector 的 function，把它寫在同個合約內，編譯看看，會發生什麼事?
+https://openchain.xyz/signatures
+https://www.4byte.directory/
+
+> #### encode vs encodePacked
+
+encodePacked 把 0 拿掉，不會存長度，與合約互動使用 Abi.encode，單純計算 hash 可使用 encodePacked
+
+> #### abi.encode()
+
+```solidity
+// 0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000008617070776f726b73000000000000000000000000000000000000000000000000
+abi.encode("appworks");
+```
+
+> #### abi.encodePacked()
+
+```solidity
+// 0x617070776f726b73
+abi.encodePacked("appworks");
+```
+
+> #### abi.encodeWithSelector()
+
+> #### abi.encodeWithSignature()
+
+- uint 預設為 uint256，但在 abi.encodeWithSignature 需要標示 uint256
+- 空格就會產生不同 hash 因此逗點後不需要空格
+
+```solidity
+// 0x
+// 55241077
+// 0000000000000000000000000000000000000000000000000000000000000007
+abi.encodeWithSignature("setValue(uint256)", 7);
+
+// 0x
+// d80aa9ea
+// 0000000000000000000000000000000000000000000000000000000000000007
+// 000000000000000000000000000000000000000000000000000000000000000c
+abi.encodeWithSignature("setTwoValues(uint32,uint32)",7,12);
+```
+
+> #### 嘗試將剛剛撰寫的transfer or transferFrom透過encodeWithSignature、encodeWithSelector改寫
+
+> #### abi.decode()
+
+```solidity
+function decodeSchool(bytes calldata encodedData) public pure returns (string memory, uint256, address) {
+    (string memory name, uint256 number, address addr) = abi.decode(encodedData, (string, uint256, address));
+    return (name, number, addr);
+}
+```
+
+Source:
+
+- [Solidity Document](https://docs.soliditylang.org/en/latest/abi-spec.html)
+- [Hashing Functions In Solidity Using Keccak256](https://medium.com/0xcode/hashing-functions-in-solidity-using-keccak256-70779ea55bb0)
+- [Uses of keccak256 and abi.encodePacked in Solidity](https://coinsbench.com/uses-of-keccak256-and-abi-encodepacked-in-solidity-4f9bdc8d3c9f)
+- [Learn Solidity lesson 21. Abi encode and decode.](https://medium.com/coinmonks/learn-solidity-lesson-21-abi-encode-and-decode-e99ed3524098)
+
+### Contract Interaction
+
+> #### 什麼是External Call, Internal Call? 合約中call 其他合約算是 External Call 還是 Internal Call
+
+> #### 透過Remix撰寫與ERC20(之前作業或是新部署都可以)中方法(transfer or transferFrom)交互的合約
+
+> #### Withdraw, Approve, Transfer
+
+在 Etherscan 上觀察 Wrapped ether 合約的交易：
+以下各找 1 筆狀態為 Success 的 Transaction: Withdraw, Approve, Transfer，觀察並討論：
+
+- 交易被執行時，是誰針對wrap ether合約call此方法
+- 傳入該方法的有哪些參數
+- 交易所帶的 parameters ，是如何變成上述的0x…，透過remix舉例
+- 點擊 transaction，看 Input Data按按看 "Decode Input Data" 按鈕
+
+### Tenderly
+
+> #### Tenderly是什麼，有提供哪些功能，試著先註冊並使用看看
+
+> #### 試著使用Tenderly & Transaction Tracker分析此筆 WrapEther Tx
+
+> #### 試著分析這筆Uniswap Tx，需要分析到這三點
+
+- 整筆交易是用什麼幣換成什麼幣
+- User一開始傳了什麼幣進去，才兌換出另一種幣
+- User一開始是跟哪一份合約交互
+
+### EIP 712
+
+> #### 什麼是EIP 712，要解決什麼問題
+
+> #### 可以用一般的方法簽名嗎，還是需要特別的方法
+
+### EIP 2612
+
+> #### 什麼是EIP 2612，要解決什麼問題
+
+> #### Offline如果要簽名，要怎麼簽？
+
+## E-Portfolio
+
+---
+
+|       | Hours | 紀錄                                           |
+| :---: | :---: | ---------------------------------------------- |
+|  Mon  |   1   | 整理作業架構                                   |
+|  Tue  |   3   | 複習 Keccak256, Encryption vs Hash, abi        |
+|  Wed  |   4   | 寫 function encode, Storage slot, 預習週四內容 |
+|  Thu  |   1   | 複習週四內容                                   |
+|  Fri  |   3   | 複習週四內容                                   |
+|  Sat  |   8   | 寫 TradingCenter, 安裝 foundry                 |
+|  Sun  |   4   | 複習這一兩週內容                               |
+| Total |  24   |                                                |
+
+#### 本週學習總結
+
+#### 下週學習目標
+
+---
+
+## Feedback
+
+---
