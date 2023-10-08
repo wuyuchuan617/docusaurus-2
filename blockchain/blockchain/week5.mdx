@@ -21,7 +21,7 @@ import Admonition from "@theme/Admonition";
 
 - TradingCenter 合約
   - 此份合約只能夠交換BC token(ERC20)
-  - 你可提供BC token進合約，也能夠用自行部署的ERC20 token交換合約內擁有的BC token
+  - 你可提供BC token進合約，也能夠用自行部署的 ERC20 token 交換合約內擁有的 BC token
   - 自行部署的ERC20與BC token間的匯率固定永遠 1:1
 - Trading Center會想要怎麼實作架構
   - 前置作業
@@ -494,8 +494,29 @@ abi.encode("appworks");
 // 0x617070776f726b73
 abi.encodePacked("appworks");
 ```
+> #### 呼叫另個合約
+
+call 函數支持傳入任意類型的任意參數，並將參數打包成bytes32，相互拼接後向合約發送這段數據。
+
+1. `_address.call(abi.encodeWithSelector(interface.方法名稱.selector))`
+
+2. `_address.call(abi.encodeWithSelector(bytes4(keccak256(“方法名稱與參數”))))`
+
+3. `_address.call(abi.encodeWithSignature(“方法名稱與參數”))`
+
+4. `Interface(_address).func()`
+
 
 > #### abi.encodeWithSelector()
+
+```solidity
+abi.encodeWithSelector(IERC20.transfer.selector, to, amount)
+
+abi.encodeWithSelector(bytes4(keccak256("core(uint256,address,string,uint256[2])")), x, addr, str, arr)
+
+abi.encodeWithSelector(this.getBalanceOf.selector, user)
+(bool success, bytes memory data) = address(this).call(abi.encodeWithSelector(this.getBalanceOf.selector, user));
+```
 
 > #### abi.encodeWithSignature()
 
@@ -514,8 +535,6 @@ abi.encodeWithSignature("setValue(uint256)", 7);
 // 000000000000000000000000000000000000000000000000000000000000000c
 abi.encodeWithSignature("setTwoValues(uint32,uint32)",7,12);
 ```
-
-> #### 嘗試將剛剛撰寫的transfer or transferFrom透過encodeWithSignature、encodeWithSelector改寫
 
 > #### abi.decode()
 
@@ -590,7 +609,14 @@ Source:
 
 #### 本週學習總結
 
+這禮拜在圖書館借了一本書[《DeFi未來銀行》](https://www.books.com.tw/products/0010925181)，原本預期可能會看不懂，但滿意外的在有上過課的內容能夠在上一頁就知道接下來會講的內容，在一個月前完全 0 的狀態看見自己的小進步，裡面還有介紹 uniswap compound 運作方式，希望可以透過書了解更多。
+
+在課堂上雖然有點跟不上，不過回家多花一些時間慢慢把不懂的地方理解後，還是可以理解並完成課堂練習、作業。
+
 #### 下週學習目標
+
+- 看 [Foundry 教學影片](https://www.youtube.com/playlist?list=PLO5VPQH6OWdUrKEWPF07CSuVm3T99DQki)
+- 把到目前為止的題目再練習一次
 
 ---
 
