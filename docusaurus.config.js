@@ -69,9 +69,9 @@ const config = {
     [
       "@docusaurus/plugin-content-docs",
       {
-        id: "explore",
-        path: "explore",
-        routeBasePath: "explore",
+        id: "frontend",
+        path: "frontend",
+        routeBasePath: "frontend",
         sidebarPath: require.resolve("./sidebars.js"),
       },
     ],
@@ -107,12 +107,12 @@ const config = {
           //   position: "left",
           //   label: "Notes",
           // },
-          // {
-          //   to: "/explore/intro", // ./docs-api/Intro.md
-          //   label: "explore",
-          //   position: "left",
-          //   activeBaseRegex: `/explore/`,
-          // },
+          {
+            to: "/frontend/intro", // ./docs-api/Intro.md
+            label: "Frontend",
+            position: "left",
+            activeBaseRegex: `/frontend/`,
+          },
           {
             to: "/blockchain/category/blockchain-program", // ./docs-api/Intro.md
             label: "Blockchain",

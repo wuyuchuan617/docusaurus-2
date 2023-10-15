@@ -14,4 +14,409 @@ import Admonition from "@theme/Admonition";
 # Week 6
 
 ## Homework
+
+### Wrapped ether test
+
+由於往後作業皆會包含測試 (Foundry) 相關議題，繳交方式請將專案上傳至個人 github (含 readme 說明如何執行) 並確保導師可以存取以及下載後可以順利編譯並執行 (請自行 Clone 測試可順利執行)。
+
+> #### 請將第四週作業的 Wrapped ether 合約放入 src ，並為他寫一份 test contract，裡面應該至少包含
+
+[github link](https://github.com/wuyuchuan617/foundry-test)
+
+```
+git clone git@github.com:wuyuchuan617/foundry-test.git
+forge test --mp test/week6/WETH.t.sol -vvv
+```
+
+- 測項 1: deposit 應該將與 msg.value 相等的 ERC20 token mint 給 user
+- 測項 2: deposit 應該將 msg.value 的 ether 轉入合約
+- 測項 3: deposit 應該要 emit Deposit event
+- 測項 4: withdraw 應該要 burn 掉與 input parameters 一樣的 erc20 token
+- 測項 5: withdraw 應該將 burn 掉的 erc20 換成 ether 轉給 user
+- 測項 6: withdraw 應該要 emit Withdraw event
+- 測項 7: transfer 應該要將 erc20 token 轉給別人
+- 測項 8: approve 應該要給他人 allowance
+- 測項 9: transferFrom 應該要可以使用他人的 allowance
+- 測項 10: transferFrom 後應該要減除用完的 allowance
+- 其他可以 test case 可以自己想，看完整程度給分
+- 測項 11: 測試 constructor
+- 測項 12: transfer 應該要 emit Transfer event
+- 測項 13: transferFrom 應該要 emit Transfer event
+- 測項 14: withdraw 超過 balnace 應該要出現 Error "Insufficient balance"
+- 測項 15: transferFrom 超過 allowance 應該要出現 Error "Insufficient allowance"
+- 測項 16: transferFrom 超過 balance 應該要出現 Error "Insufficient balance"
+
+### ERC721
+
+> #### 說明什麼是 ERC721，為什麼他被叫做 non fungible token？
+
+所謂 NFT (Non-Fungible Token) 非同質化代幣，指以太坊開發者根據ERC721標準所發出的代幣，其特性為不可分割、不可替代、獨一無二。
+
+![](https://hackmd.io/_uploads/rJ_Y_NYb6.png)
+
+Sourece: https://lootex.gitbook.io/docs/2.-pai-mai-chang-marketplace-jiao-xue-v2-outdated/newbie-manual/shen-me-shi-nft
+
+> #### ERC721 interface
+
+- **Function**
+  - balanceOf(owner)
+  - ownerOf(tokenId)
+  - safeTransferFrom(from, to, tokenId, data)
+  - safeTransferFrom(from, to, tokenId)
+  - transferFrom(from, to, tokenId)
+  - approve(to, tokenId)
+  - setApprovalForAll(operator, approved)
+  - getApproved(tokenId)
+  - isApprovedForAll(owner, operator)
+
+> #### IERC721Metadata interface
+
+> #### 說明 ERC721 tokenURI 為何?
+
+將 tokenID 傳入 tokenURI function，返回一個 HTTP 或 IPFS URL，這個 URL 則必須返回一個 JSON 格式的數據。
+
+![](https://hackmd.io/_uploads/B1cAFNKZp.png)
+
+Source:
+
+- https://www.frank.hk/blog/on-chain-nft
+- https://docs.openzeppelin.com/contracts/5.x/api/token/erc721
+
+> #### Metadata 是什麼?
+
+NFT 的 Metadata 有點像是用來描述這個 NFT 是甚麼的文件，透過 Metadata 我們就可以快速知道這個 NFT 的名稱是甚麼(“name”)、一段話敘述這個 NFT 的大綱(“description”)、圖片放在哪個網址(“image”)等等的相關資訊的 json 格式。
+
+> #### NFT 如何顯示圖片？
+
+當 NFT 的顯示器在嘗試顯示這張 NFT 的樣貌時會先透過網址連到這個 .json 檔，並在解析 .json 檔底下的 Metadata 時，會找到 image 欄位，再透過 image 欄位裡面的 IPFS 網址去連結到真正的圖片將 NFT 完整地顯示出來。
+
+> #### Metadata 內容會包含哪些欄位?
+
+1. image: NFT 圖片儲存的網址 IPFS URL。
+2. external_url: 外部連結網址，可以設定讓它連結到我們自己的網站或是這個專案的官網，如果有設定這個 Metadata，在 NFT 的頁面會多一個外部連結的按鈕。
+3. name: 這個 NFT 專案的名稱。
+4. description: 這個 NFT 專案的概述。
+5. attributes: NFT 的屬性，當你發行的 NFT 是用多個零件隨機拼湊起來的時候就具有不同稀有度，設定 attributes 可以一目了然的看出各個 NFT 的稀有度。
+6. animation_url 與 youtube_url: 這些都是附加的網址，假設專案有設計一些宣傳影片也可以這樣放上來。
+
+![](https://hackmd.io/_uploads/S1tyeSK-p.png)
+
+Source:
+
+- https://docs.opensea.io/docs/metadata-standards
+- https://vocus.cc/article/628f8b86fd89780001f2bc02
+- https://www.frank.hk/blog/on-chain-nft
+
+> #### Owner and ownable 是什麼？
+
+> #### OpenSea
+
+目前最大在販買NFT的平台。
+https://opensea.io/
+
+> #### IPFS 是什麼？
+
+IPFS (InterPlanetary File System)星際檔案系統是一種分散式檔案儲存系統，跟使用雲端服務差不多的地方就是你並不知道自己的檔案被存到哪裡去了，但與雲端服務的差別是雲端服務通常都需要有超大型的資料中心來保管資料，所以可以看成是中心化的儲存，而 IPFS 是去中心化的儲存，你的資料會儲存在非常多不同的節點，好處是資料不容易丟失(由於系統設計的機制不能保證資料一定不會遺失)，但壞處是如果圖片檔案較大的話儲存時會被切割成比較多份，分開存放到不同的節點中，這導致資料讀取所需的時間可能會比較久。
+
+IPFS 就像我們日常使用的 HTTP 一樣，本身算是一個網路協議，每個資料被儲存時會產生獨一無二的哈希值，這就像網域中的 IP 一樣是唯一的。在網際網路的使用上 IP 很不好記憶，所以 IP 網域會透過網域名稱系統（DNS）轉換到一個網址，到 Google 首頁，這是因為當我們輸入 google.com 之後，瀏覽器會先去 DNS 找到 google.com 對應的 IP (142.250.193.206)，再用此 IP 連線到 Google 的伺服器；IPFS 也有一樣的域名系統（IPNS）在做類似的事情，把哈希值轉換成更容易看懂的符號，提高資料讀取的效率。
+
+Source:
+
+- https://vocus.cc/article/627d14fefd8978000128f81a
+
+> #### ERC-1155 是什麼？
+
+Source:
+
+- https://www.youtube.com/watch?v=LmaehJD8PBU
+- https://lootex.gitbook.io/docs/2.-pai-mai-chang-marketplace-jiao-xue-v2-outdated/newbie-manual/shen-me-shi-nft
+
 ## Class
+
+### Fundamental setting
+
+### Foundry command
+
+> #### Init project
+
+- `forge init [project name]`
+- `forge install openzeppelin/openzeppelin-contracts --no-commit`
+- `forge remappings` 產生 import library 的路徑設定檔 remappings.txt
+- 資料夾結構
+  ```txt
+  ├── foundry.toml (foundry 設定檔)
+  ├── remappings.txt (import library 的路徑設定檔)
+  ├── lib (套件)
+  │   └── forge-std
+  │       ├── LICENSE-APACHE
+  │       ├── LICENSE-MIT
+  │       ├── README.md
+  │       ├── foundry.toml
+  │       ├── lib
+  │       └── src
+  ├── script (與合約互動的 script)
+  │   └── Counter.s.sol
+  ├── src (合約)
+  │   └── Counter.sol
+  └── test (測試合約)
+      └── Counter.t.sol
+  ```
+
+### Forge / Cast / Anvil / Chisel
+
+> #### Forge
+
+Forge is a command-line tool that ships with Foundry. Forge tests, builds, and deploys your smart contracts.
+
+用於編譯、測試、部署和驗證Solidity合约的框架
+
+> #### Cast
+
+Cast is Foundry's command-line tool for performing Ethereum RPC calls. You can make smart contract calls, send transactions, or retrieve any type of chain data - all from your command-line!
+
+從命令行中執行 Ethereum RPC 調用並與以太坊互動並進行轉換的工具。
+
+> #### Anvil
+
+Anvil is a local testnet node shipped with Foundry. You can use it for testing your contracts from frontends or for interacting over RPC.
+
+創建一個本地測試網節點，用於部署和測試智能合約。它也可以用來分叉其他與 EVM 兼容的網路。
+
+> #### Chisel
+
+Chisel is an advanced Solidity REPL shipped with Foundry. It can be used to quickly test the behavior of Solidity snippets on a local or forked network.
+
+Chisel 是隨 Foundry 提供的高級 Solidity REPL（交互式命令工具）。它可用於在本地或 Fork 網路上快速測試 Solidity 片段。
+
+### Foundry command
+
+- `forge test [options]`
+  - `--match-contract` => 只測試對應名稱的 contract (--mc)
+  - `--match-test` => 只測試對應名稱的 test case (--mt)
+  - `--match-path` => 只測試對應 path 的 contract (--mp)
+  - `-v` => 可以 print 出所有 function call 的 trace log(深度最多是 5)
+- `forge build`
+- `forge fmt `
+
+#### Formatter
+
+- `forge fmt`
+- `.vscode/settings.json`
+
+```
+{
+  "editor.formatOnSave": true,
+  "[solidity]": {
+    "editor.defaultFormatter": "JuanBlanco.solidity"
+  },
+  "solidity.formatter": "forge",
+}
+```
+
+### Useful Cheatcodes
+
+[Foundry-Cheatsheet](https://milotruck.github.io/blog/Foundry-Cheatsheet/#useful-cheatcodes)
+
+- `forge-std/Test.sol` : 打包所有 foundry testing framework 多數會用到工具
+- `setUp()` : 讓你初始化環境的地方，每一個測試執行前都執行一次。
+- `console.log()`
+
+### Fundamental testing
+
+- 數字計算正確
+- Require 正確
+- Msg.sender 是否正確
+- Msg.value 是否正確
+- ERC20 transfer success
+- Low-level Call success
+- Event Check
+
+### MyContract 1 test
+
+> #### address(this) vs address(instance)
+
+- address(this) is the address of the CounterTest contract.
+- address(instance) is the address of the deployed instance of MyContract.
+
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.9;
+
+// Uncomment this line to use console.log
+// import "hardhat/console.sol";
+
+contract MyContract {
+    address public user1;
+    address public user2;
+
+    event Receive(address indexed from, uint256 amount);
+
+    constructor(address _user1, address _user2) {
+        user1 = _user1;
+        user2 = _user2;
+    }
+
+    receive() external payable {
+        emit Receive(msg.sender, msg.value);
+    }
+}
+
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.13;
+
+import {Test, console2} from "forge-std/Test.sol";
+import {MyContract} from "../../src/week6/MyContract.sol";
+
+contract CounterTest is Test {
+    // 1. Set user1, user2
+    // 2. Create a new instance of MyContract
+    // 3. (optional) label user1 as bob, user2 as alice
+
+    MyContract public instance;
+    address public user1;
+    address public user2;
+
+    event Receive(address indexed from, uint256 amount);
+
+    function setUp() public {
+        user1 = makeAddr("Bob");
+        user2 = makeAddr("Alice");
+        instance = new MyContract(user1, user2);
+    }
+
+    function testConstructor() public {
+        // 1. Assert instance.user1() is user1
+        // 2. Assert instance.user2() is user2
+        assertEq(instance.user1(), user1);
+        assertEq(instance.user2(), user2);
+    }
+
+    function testReceiveEther() public {
+        // 1. pretending you are user1
+        vm.startPrank(user1);
+
+        // 2. let user1 have 1 ether
+        deal(user1, 1 ether);
+
+        // 3. test Receive event
+        vm.expectEmit(true, false, false, true, address(instance));
+        emit Receive(user1, 1 ether);
+
+        // 4. send 1 ether to instance
+        (bool sent, ) = address(instance).call{value: 1 ether}("");
+
+        require(sent, "Fail");
+
+        // 5. Assert instance has 1 ether in balance
+        assertEq(address(instance).balance, 1 ether);
+
+        // 6. stop pretending
+        vm.stopPrank();
+    }
+}
+```
+
+### MyContract 2 test
+
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.9;
+
+import {MyContract} from "./MyContract.sol";
+
+contract MyContract2 is MyContract {
+    constructor(address _user1, address _user2) MyContract(_user1, _user2) {}
+
+    event Send(address indexed to, uint256 indexed amount);
+
+    function sendEther(address to, uint256 amount) external payable {
+        require(msg.sender == user1 || msg.sender == user2, "only user1 or user2 can send");
+        require(address(this).balance >= amount, "insufficient balance");
+        (bool success,) = to.call{value: amount}("");
+        require(success, "transfer failed");
+        emit Send(to, amount);
+    }
+}
+
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.13;
+
+import {Test, console2} from "forge-std/Test.sol";
+import {MyContract2} from "../../src/week6/MyContract2.sol";
+
+contract CounterTest is Test {
+    MyContract2 public instance;
+    address public user1;
+    address public user2;
+
+    event Send(address indexed to, uint256 indexed amount);
+
+    function setUp() public {
+        user1 = makeAddr("user1");
+        user2 = makeAddr("user2");
+        instance = new MyContract2(user1, user2);
+    }
+
+    function testConstructor() public {
+        // 1. Assert instance.user1() is user1
+        // 2. Assert instance.user2() is user2
+        assertEq(instance.user1(), user1);
+        assertEq(instance.user2(), user2);
+    }
+
+    function testInvalidUserRevert() public {
+        vm.startPrank(makeAddr("user3"));
+        vm.expectRevert("only user1 or user2 can send");
+        instance.sendEther(user1, 1 ether);
+        vm.stopPrank();
+    }
+
+    function testInsufficientBalance() public {
+        vm.startPrank(user1);
+        deal(address(instance), 2e18);
+        vm.expectRevert("insufficient balance");
+        instance.sendEther(user1, 3e18);
+        vm.stopPrank();
+    }
+
+    function testSendEther() public {
+        vm.startPrank(user1);
+
+        deal(address(instance), 1e18);
+
+        // test Send event
+        vm.expectEmit(true, true, false, true, address(instance));
+        emit Send(user1, 1e18);
+
+        instance.sendEther(user1, 1e18);
+        assertEq(address(user1).balance, 1e18);
+
+        vm.stopPrank();
+    }
+}
+```
+
+### Forking mainnet
+
+## E-Portfolio
+
+---
+
+|       | Hours | 紀錄           |
+| :---: | :---: | -------------- |
+|  Mon  |   0   |                |
+|  Tue  |   0   |                |
+|  Wed  |   2   | 複習考試       |
+|  Thu  |   0   |                |
+|  Fri  |   4   | 複習 Fork test |
+|  Sat  |   8   | 寫 HW test     |
+|  Sun  |   6   | 寫 ERC721      |
+| Total |  20   |                |
+
+#### 本週學習總結
+
+這週學了測試後覺得滿方便的，手動按常常會漏掉或按錯又要重來。
+
+#### 下週學習目標
+
+把之前寫的作業補上測試。
