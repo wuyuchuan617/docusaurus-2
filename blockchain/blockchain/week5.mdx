@@ -343,7 +343,11 @@ Unit test 是以程式碼的最小單位進行測試，因為合約部署上鏈�
 
 > #### 什麼是 Fuzzing 測試？
 
+Fuzzing test（模糊測試）是一種自動化測試技術，旨在發現軟體或系統的錯誤和安全漏洞。這種方法通過將大量的隨機、無效、或者異常的數據輸入到被測程序中，來觀察其行為。
+
 > #### Foundry vs Hardhat
+
+Hardhat 使用 javascript 做撰寫，且使用 npm 做相關的套件管理，而在 Foundry 裡頭全都是使用 solidity 撰寫，再搭配 CLI 工具。
 
 > #### 安裝 foundry，確認可以使用 forge、cast 和 anvil
 
@@ -494,6 +498,7 @@ abi.encode("appworks");
 // 0x617070776f726b73
 abi.encodePacked("appworks");
 ```
+
 > #### 呼叫另個合約
 
 call 函數支持傳入任意類型的任意參數，並將參數打包成bytes32，相互拼接後向合約發送這段數據。
@@ -505,7 +510,6 @@ call 函數支持傳入任意類型的任意參數，並將參數打包成bytes3
 3. `_address.call(abi.encodeWithSignature(“方法名稱與參數”))`
 
 4. `Interface(_address).func()`
-
 
 > #### abi.encodeWithSelector()
 
@@ -554,7 +558,17 @@ Source:
 
 ### Contract Interaction
 
-> #### 什麼是External Call, Internal Call? 合約中call 其他合約算是 External Call 還是 Internal Call
+> #### 什麼是External Call, Internal Call? 
+
+external call 是呼叫合約外部的 function，需要支付 gas，Internal Call 是呼叫合約內部的 function 不需支付 gas。
+
+> #### 合約中call 其他合約算是 External Call 還是 Internal Call
+
+external call
+
+> #### external call 和 external transaction
+
+external call 是呼叫合約外部的 function，external transaction 是由 EOA 發起交易。
 
 > #### 透過Remix撰寫與ERC20(之前作業或是新部署都可以)中方法(transfer or transferFrom)交互的合約
 
@@ -563,9 +577,20 @@ Source:
 在 Etherscan 上觀察 Wrapped ether 合約的交易：
 以下各找 1 筆狀態為 Success 的 Transaction: Withdraw, Approve, Transfer，觀察並討論：
 
-- 交易被執行時，是誰針對wrap ether合約call此方法
+- Withdraw : https://etherscan.io/tx/0x20e7ab53a1a2ac832914af5b1656b902cf233d2901ab0f224522e6f8ebb33cf4
+- Approve: https://etherscan.io/tx/0xf7bfd2dcc099a54d1f6c52fa1c5c8fb089edb6db0fbf7b14aeae79382ab2b003
+- Transfer : https://etherscan.io/tx/0xd2bb1211d3bf2bd5f15fa32048014a57b02f73482618eb1352e6a95851fc6743 
+
+- 交易被執行時，是誰針對 wrap ether 合約call此方法 : From
 - 傳入該方法的有哪些參數
+    - Function: withdraw(uint256 wad)
+    - Function: approve(address guy, uint256 wad)
+    - Function: transfer(address dst, uint256 wad)
+
 - 交易所帶的 parameters ，是如何變成上述的0x…，透過remix舉例
+    - abi.encodeWithSignature("transferFrom(address,address,uint256)", msg.sender, address(this), amount);
+    - abi.encodeWithSignature("withdraw(uint256)", wad);
+
 - 點擊 transaction，看 Input Data按按看 "Decode Input Data" 按鈕
 
 ### Tenderly
