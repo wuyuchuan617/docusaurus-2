@@ -1,0 +1,179 @@
+---
+sidebar_position: 8
+sidebar_label: Week 7
+tags:
+  - Blockchain
+  - Ethereum
+  - Solidity
+  - Smart Contract
+---
+
+import Gist from "react-gist";
+import Admonition from "@theme/Admonition";
+
+# Week 7
+
+## Homework
+
+### ERC721 token, Receiver Contract
+
+> #### 作業1 - 請實作一個 ERC721 token 和 Receiver Contract
+
+- name(): Don’t send NFT to me。
+- symbol(): “NONFT”
+- metadata image: https://imgur.com/IBDi02f
+- 功能：
+  - Receiver 收到一個的其他 ERC721 token (此 Token 隨意設計就行)，若此 Token 非我們上述的 NONFT Token，就將其傳回去給原始 Token owner，同時 mint 一個這個 NONFT token 給 owner。
+  - ERC721 請與 Receiver 分成兩個不同的合約。
+  - 需測試執行完畢原始的 sender 可以收到原本的 token + NONFT token
+
+> #### Links
+
+- Opensea : https://testnets.opensea.io/collection/don-t-send-nft-to-me-8
+- Contract : https://github.com/wuyuchuan617/foundry-test/blob/master/src/week7/HW1.sol
+- Test : https://github.com/wuyuchuan617/foundry-test/blob/master/test/week7/HW1.t.sol
+
+> #### Contract & Test
+
+```
+git clone git@github.com:wuyuchuan617/foundry-test.git
+forge test --mp test/week7/HW1.t.sol -vvv
+```
+
+- user1 mint NoUseful 1 token tokenId 0
+- check user1 NoUseful balance should be 1
+- check tokenId owner should be user 1
+- user1 setApprovalForAll true to operator NFTReceiver
+- check isApprovedForAll owner user1 operator NFTReceiver should be true
+- user1 safeTranserFrom from user1 to NFTReceiver
+- NoUseful balanceOf user1 should be 1
+- HWToken balanceOf user1 should be 1
+
+### 盲盒隨機 Token
+
+> #### 作業2 - 做一個隨機自由 mint token 的 ERC721
+
+- totalSupply: 500
+- mint(): 基本正常 mint，不要達到上限 500 即可
+- randomMint() 加分項目，隨機 mint tokenId (不重複)
+  - 隨機的方式有以下選擇方式
+    - 自己製作隨機 random，不限任何方法
+    - Chainlink VRF
+    - RANDAO
+- Implement 盲盒機制
+- 請寫測試確認解盲前的 tokenURI 及解盲後的 tokenURI
+
+#### Link
+
+- 盲盒 : https://github.com/wuyuchuan617/foundry-test/blob/master/src/week7/HW2.sol
+- Test : https://github.com/wuyuchuan617/foundry-test/blob/master/test/week7/HW2.t.sol
+
+```
+git clone git@github.com:wuyuchuan617/foundry-test.git
+forge test --mp test/week7/HW2.t.sol -vvv
+```
+
+### Chainlink VRF
+
+https://sepolia.etherscan.io/address/0xa152ed774775b32cd6b077e8e65fde0c5270615d
+
+## Test
+
+[Test Link](https://docs.google.com/forms/d/e/1FAIpQLSdFq6ZtxqIhTrD7cZz57aKC0T8bVkIbos7ZndGUURPvvtRp3w/formResponse)
+
+> #### EVM 架構中有哪些元件？
+
+1. Stack
+2. Storage
+3. Memory
+4. Calldata
+
+![](https://hackmd.io/_uploads/Sk047ETZ6.png)
+
+## Class
+
+### ERC721
+
+- 標準 ERC721 會包含哪些 function?
+- 可以應用的場景為何? Ex. Soulbound Token、嘟嘟房
+- 分享玩過 NFT 的經驗
+
+What is baseURI?
+What is tokenURI?
+Where can store our media file?
+What is metadata means?
+How many fields should defined in the metadata file?
+(for opensea)
+
+### ERC721 Extension
+
+- IERC721 Receiver
+
+### Whitelist
+
+Clone this repo:
+Please observe the ./src/ERC721Whitelist.sol and pass the test case in ./test/ERC721Whitelist.t.sol
+
+### Merkle root
+
+### Storage: IPFS
+
+- What is IPFS?
+- Pinata
+- Should we use IPFS to store our metadata and media file?
+
+### Created NFT on Opensea
+
+製作標準 ERC721 Token，並嘗試於 Opensea Sepolia 測試網中呈現，必須寫合約實作並 mint NFT
+
+#### 1. IPFS
+
+1. 準備兩個資料夾，一個放 images，另一個放 metadata 檔名改為 tokenId (json 格式)
+2. 到 Pinata 註冊
+3. 先把 images folder 整個上傳到 Pinata，成功後打開會到 IPFS 網頁看到剛剛上傳的圖片
+4. 把圖片 URI 放到對應的 metadata image
+5. 把 metadata folder 整個上傳到 Pinata，，成功後打開會到 IPFS 網頁看到剛剛上傳的 json 檔
+6. 複製 metadata folder URL 當作 baseURL。 ex: `QmeEz5KyX6FCxpvAbvEFXdeg4B4qPe4uqXWX3e33Wo8kFu`
+
+#### 2. ERC721 Contract
+
+1. 將 baseURL override
+2. 撰寫 mint function
+3. deploy contract
+4. mint to my address with tokenId 0
+5. tokenURI return metadata
+
+#### 3. opensea
+
+1. Go Opensea testnet
+2. Login Opensea and go profile
+3. Show my NFT, render metadata image URI
+
+### Blind box
+
+- 討論如何實作盲盒?
+- 有哪些方法?
+- 基於上一項發布的 NFT，增加盲盒機制。
+
+## E-Portfolio
+
+---
+
+|       | Hours | 紀錄           |
+| :---: | :---: | -------------- |
+|  Mon  |   0   |                |
+|  Tue  |   0   |                |
+|  Wed  |   2   | 複習週一內容       |
+|  Thu  |   0   |                |
+|  Fri  |   2   | 複習發 NFT |
+|  Sat  |   8   | 寫 HW1     |
+|  Sun  |   8   | 寫 HW2      |
+| Total |  22   |                |
+
+#### 本週學習總結
+
+有按照 Chainlink 文件範例合約能產生隨機數，但作業還沒把它用在 mint 中做出來。
+
+#### 下週學習目標
+
+再多熟習 ERC721、產生隨機數
