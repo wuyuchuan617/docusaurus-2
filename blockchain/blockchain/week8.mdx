@@ -1,0 +1,126 @@
+---
+sidebar_position: 8
+sidebar_label: Week 8
+tags:
+  - Blockchain
+  - Ethereum
+  - Solidity
+  - Smart Contract
+---
+
+import Gist from "react-gist";
+import Admonition from "@theme/Admonition";
+
+# Week 8v
+
+## Homework
+
+### HW1 : First Rug Pull
+
+請 clone 這份合約，試圖在 test 中升級後 rug pull 搶走所有 user 的 usdc 和 usdt
+
+https://github.com/wuyuchuan617/RugPullHW/blob/master/test/TradingCenterTest.t.sol
+
+```
+git clone git@github.com:wuyuchuan617/RugPullHW.git
+
+forge test --mp test/TradingCenterTest.t.sol -vvv
+```
+
+### HW2 : Second Rug Pull
+
+請假裝你是 USDC 的 Owner，嘗試升級 usdc，並完成以下功能
+
+- https://etherscan.io/address/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48#code
+- 製作一個白名單
+- 只有白名單內的地址可以轉帳
+- 白名單內的地址可以無限 mint token
+- 如果有其他想做的也可以隨時加入
+
+https://github.com/wuyuchuan617/RugPullHW/blob/master/test/SecondRugPull.t.sol
+
+```
+git clone git@github.com:wuyuchuan617/RugPullHW.git
+
+forge test --mp test/SecondRugPull.t.sol --fork-url https://eth-mainnet.g.alchemy.com/v2/S7FGzEEsfVR6BassdzCaK8PLJXl53ZTo -vvv
+```
+
+## Class
+
+### Multi-Sig Wallet
+
+> #### 什麼是多重簽名錢包（Multisig Wallet）？
+
+設定多人共同管理一個地址，必須有超過半數管理者同意才能動用資金。
+
+> #### 單簽 vs 多重簽名
+
+單簽如果私鑰掉了資產就有可能被竊取，多簽的話需要半數的私鑰才能且取該地址下的資產。
+
+> #### 多簽流程
+
+1. 匯出Token，但是會交易會是擱置著等第二個人簽章
+2. 第二個人簽章確認交易
+3. 確認第二個人簽章後將Token匯出
+
+> #### Gnosis Safe
+
+- https://app.safe.global/welcome
+- [Gnosis Safe 多簽錢包使用教學](https://johnny-chuang.medium.com/gnosis-safe-%E5%A4%9A%E7%B0%BD%E9%8C%A2%E5%8C%85%E4%BD%BF%E7%94%A8%E6%95%99%E5%AD%B8-aeed1b9b36bd)
+- 創建流程
+- Transfer In
+- Transfer Out : A submit new TX -> Queue -> B confirm
+- Gas Fee 會由最後一個 Confirm 的錢包來支付
+- 取消交易 : A Reject -> B 同意 Rejection 那筆交易來把原本的 nounce 蓋過去 pay reject gas fee
+
+> #### Multi-Sig Wallet vs EOA
+
+- [What is a smart contract wallet?](https://www.argent.xyz/learn/what-is-a-smart-contract-wallet/?source=post_page-----aeed1b9b36bd--------------------------------)
+
+### call & delegatecall
+
+- CALL : 當合約 A call 合約 B，無法修改呼叫合約（合約A）的 state variables，因為 execution context 是在 Contract B 中。
+- DELEGATECALL : 被呼叫合約（合約B）可以修改呼叫合約（合約A）的 state variables，因為 execution context 是在 Contract A 中。
+
+### receive & fallback
+
+- fallback() 當呼叫合約但是該合約下卻沒有任何吻合 function 且 msg.data 有值就會呼叫 fallback()。
+- receive() 在 msg.data empty 且 receive() 存在時才會執行 receive()。如果 receive() 不存在則執行 fallback()
+
+### Proxy Pattern
+
+把執行合約、邏輯合約拆分開來，邏輯
+
+### Constructor Initializer
+
+solidity中的constructor 並不是 runtime bytecode 的一部分，只會在佈署的過程中運行一次，所以代理合約無法使用實例合約的constructor，因為已經在佈署時運行過了，因此我們把要把實例合約的的程式碼移到 initialize function 中，如此就不會被solidity限制。
+
+還有一個不同的地方，Solidity會自動啟動其他父層合約的constructor，但在 initializer 的狀況中，你需要手動處理。
+
+### Upgrade pattern
+
+Sources:
+
+- [Solidity Deep Dive - Proxy Contracts](https://www.youtube.com/watch?v=NdNa9TiHe-4&list=PLWnBXYcF110EpJR3j9CooSRKH4FZXwkKh&index=2&t=2526s)
+- [Proxy contract 設計與變形](https://medium.com/taipei-ethereum-meetup/proxy-contract-variations-6f9d359d35bf)
+- https://blog.openzeppelin.com/proxy-patterns
+- https://www.wtf.academy/solidity-application/ProxyContract/
+
+## E-Portfolio
+
+---
+
+|       | Hours | 紀錄         |
+| :---: | :---: | ------------ |
+|  Mon  |   2   | 上課         |
+|  Tue  |   2   | 複習週一內容 |
+|  Wed  |   2   | 複習週一內容 |
+|  Thu  |   2   | 上課         |
+|  Fri  |   2   | 複習週四內容 |
+|  Sat  |   6   | 寫 HW1       |
+|  Sun  |   6   | 寫 HW2       |
+| Total |  22   |              |
+
+#### 本週學習總結
+
+#### 下週學習目標
